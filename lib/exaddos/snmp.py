@@ -3,7 +3,7 @@
 snmp.py
 
 Created by Thomas Mangin on 2014-02-07.
-Copyright (c) 2011 Exa Networks. All rights reserved.
+Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
 import sys
@@ -49,8 +49,10 @@ class _SNMPFactory (object):
 			'ifInNUcastPkts'  : mibBuilder.importSymbols('IF-MIB', 'ifInNUcastPkts')[0].getName() + (self.interface.snmp_index_vlan,),
 			'ifInErrors'      : mibBuilder.importSymbols('IF-MIB', 'ifInErrors')[0].getName() + (self.interface.snmp_index_vlan,),
 			'ifInDiscards'    : mibBuilder.importSymbols('IF-MIB', 'ifInDiscards')[0].getName() + (self.interface.snmp_index_vlan,),
+			'sysDescr'        : mibBuilder.importSymbols('SNMPv2-MIB', 'sysDescr')[0].getName() + (0,),
 		}
 
+		self.description = str(self._get('sysDescr') or '-')
 
 	def _get (self,key):
 		from pysnmp.entity.rfc3413.oneliner import cmdgen
@@ -86,7 +88,7 @@ class _SNMPFactory (object):
 	def collect (self):
 		result = {}
 
-		for key in self.collection:
+		for key in self.correction:
 			value = self._get(key)
 			if value is not None:
 				result[key] = long(value) * self.correction[key] / self.interface.snmp_frequency
@@ -99,6 +101,7 @@ class _SNMPFactory (object):
 		last = self.collect()
 
 		values = dict(zip(last.keys(),[0] * len(last.keys())))
+		values['description'] = self.description
 		values['duration'] = 0
 		self.container.set(self.name,values)
 
@@ -111,9 +114,10 @@ class _SNMPFactory (object):
 
 			new = self.collect()
 
+			values['description'] = self.description
 			values['duration'] = float('%.2f' % max(0,time.time() - start))
 
-			for key in self.collection:
+			for key in self.correction:
 				if new[key] == -1:
 					values[key] = -1
 				else:

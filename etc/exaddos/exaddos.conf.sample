@@ -3,7 +3,12 @@ user = 'nobody'
 
 [exaddos.http]
 host = '127.0.0.1'
+port = 8080
+
+[exaddos.flow]
+host = '127.0.0.1'
 port = 39200
+
 
 [exaddos.location]
 #database = 'data/exaddos/db/exaddos.sqlite3'

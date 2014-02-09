@@ -1,3 +1,11 @@
+# encoding: utf-8
+"""
+thread.py
+
+Created by Thomas Mangin on 2014-02-07.
+Copyright (c) 2014-2014 Exa Networks. All rights reserved.
+"""
+
 import sys
 import threading
 

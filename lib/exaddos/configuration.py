@@ -1,16 +1,8 @@
 """
 configuration.py
 
-Created by Thomas Mangin on 2012-05-01.
-Copyright (c) 2012 Exa Networks. All rights reserved.
-"""
-
-# encoding: utf-8
-"""
-configuration.py
-
-Created by Thomas Mangin on 2011-11-29.
-Copyright (c) 2011 Exa Networks. All rights reserved.
+Created by Thomas Mangin on 2014-02-07.
+Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
 # XXX: raised exception not caught

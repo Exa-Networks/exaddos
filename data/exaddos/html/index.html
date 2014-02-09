@@ -10,6 +10,16 @@
 			.warning-false {
 			}
 
+			#error {
+				display: inline-block;
+				text-align: center;
+				width: 100%;
+			}
+
+			.error-true {
+				color: #901030;
+			}
+
 			table.XSL {
 				font-size: 12px;
 				margin: 5px;
@@ -88,7 +98,7 @@
 		<script id="snmp_template" type="text/x-jquery-tmpl">
 			<tr id="${link}">
 				<td class='warning-${warning}'>${link}</td>
-				<td class='warning-${warning}'>${datacenter} or not</td>
+				<td class='warning-${warning}'>${description}</td>
 				<td class='warning-${warning}' align='right'>${ifHCInOctets}</td>
 				<td class='warning-${warning}' align='right'>${ifHCInUcastPkts}</td>
 				<td class='warning-${warning}' align='right'>${ifInNUcastPkts}</td>
@@ -107,13 +117,13 @@
 
 		<script type="text/javascript">
 				function draw_snmp (data) {
-					$("#error").html("all ok");
+					$("#error").empty();
 					$("#snmp_container").empty();
 					$("#snmp_template").tmpl(data).appendTo("#snmp_container");
 				}
 
 				function draw_snmp_error () {
-					$("#error").html("we lost our connection to our data source");
+					$("#error").html("<span class='error-true'>we lost our connection to our data source</span>");
 				}
 
 				function fetch_json(json_address){
@@ -155,7 +165,7 @@
 			<thead>
 				<tr>
 					<td align='center'>Node</td>
-					<td align='center'>Link</td>
+					<td align='center'>Location</td>
 					<td align='center'>Bandwidth</td>
 					<td align='center'>Unicast</td>
 					<td align='center'>NonUnicast</td>

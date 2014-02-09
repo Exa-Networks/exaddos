@@ -3,7 +3,7 @@
 warning.py
 
 Created by Thomas Mangin on 2014-02-07.
-Copyright (c) 2011 Exa Networks. All rights reserved.
+Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
 def unicast (information,interface):

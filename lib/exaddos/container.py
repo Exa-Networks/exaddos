@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-server.py
+container.py
 
 Created by Thomas Mangin on 2014-02-06.
 Copyright (c) 2014-2014 Exa Networks. All rights reserved.

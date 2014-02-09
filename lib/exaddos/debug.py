@@ -2,8 +2,8 @@
 """
 debug.py
 
-Created by Thomas Mangin on 2011-11-29.
-Copyright (c) 2011 Exa Networks. All rights reserved.
+Created by Thomas Mangin on 2014-02-06.
+Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
 import os
