@@ -1,0 +1,172 @@
+<html>
+	<head>
+
+		<style type="text/css">
+
+			.warning-true {
+				background-color: #FF2070;
+			}
+
+			.warning-false {
+			}
+
+			table.XSL {
+				font-size: 12px;
+				margin: 5px;
+			}
+
+			table.XSL thead tr:first-of-type td:first-child {
+				/*border-left: thin #C2C2C2 solid;*/
+				/*border-top: thin #C2C2C2 solid;*/
+				border-top: thin #C2C2C2 solid;
+			    border-top-left-radius: 5px;
+			}
+
+			table.XSL thead tr:first-of-type td:last-child {
+				/*border-right: thin #C2C2C2 solid;*/
+				/*border-top: thin #C2C2C2 solid;*/
+				border-top: thin #C2C2C2 solid;
+			    border-top-right-radius: 5px;
+			}
+
+			table.XSL thead td:first-child {
+				/*border-left: thin #C2C2C2 solid;*/
+				border-left: thin #C2C2C2 solid;
+			}
+
+			table.XSL thead td:last-child {
+				/*border-right: thin #C2C2C2 solid;  */
+				border-right: thin #C2C2C2 solid;
+			}
+
+			table.XSL thead tr:first-of-type td{
+				/*border-top: thin #C2C2C2 solid;*/
+				border-top: thin #C2C2C2 solid;
+				background: linear-gradient(#E1E1E1, #D6D6D6);
+			}
+
+			table.XSL thead tr td{
+				background: #D6D6D6;
+				padding: 5px;
+				min-width: 100px;
+			}
+
+			table.XSL tbody tr td:first-child{
+				/*border-left: thin #C2C2C2 solid;*/
+				border-left: thin #C2C2C2 solid;
+				border-right: thin rgba(194,194,194,0.8) solid;
+			}
+
+			table.XSL tbody tr td{
+				border-right: thin rgba(194,194,194,0.8) solid;
+				padding: 5px;
+			}
+
+			table.XSL tbody tr td:last-child{
+				/*border-right: thin rgba(194,194,194,0.8) solid; */
+				border-right: thin #C2C2C2 solid;
+			}
+
+			table.XSL tbody tr:last-of-type td{
+				/*border-bottom: thin #C2C2C2 solid; */
+				border-bottom: thin #C2C2C2 solid;
+			}
+
+			table.XSL tr td{
+				padding:5px;
+				border-left:thin solid grey;
+				border-right: thin solid grey;
+				border-bottom:thin grey solid;
+			}
+		</style>
+
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script>
+		<script type="text/javascript" src="https://raw.github.com/BorisMoore/jquery-tmpl/master/jquery.tmpl.min.js"></script>
+
+		<div id='error'></div>
+
+		<script id="snmp_template" type="text/x-jquery-tmpl">
+			<tr id="${link}">
+				<td class='warning-${warning}'>${link}</td>
+				<td class='warning-${warning}'>${datacenter} or not</td>
+				<td class='warning-${warning}' align='right'>${ifHCInOctets}</td>
+				<td class='warning-${warning}' align='right'>${ifHCInUcastPkts}</td>
+				<td class='warning-${warning}' align='right'>${ifInNUcastPkts}</td>
+				<td class='warning-${warning}' align='right'>${ifInDiscards}</td>
+				<td class='warning-${warning}' align='right'>${ifInErrors}</td>
+				<td class='warning-${warning}' align='right'>${duration}</td>
+			</tr>
+		</script>
+
+		<script id="snmp_error" type="text/x-jquery-tmpl">
+			<tr>
+				<td colspan="8">connection to server lost</td>
+			</tr>
+		</script>
+
+
+		<script type="text/javascript">
+				function draw_snmp (data) {
+					$("#error").html("all ok");
+					$("#snmp_container").empty();
+					$("#snmp_template").tmpl(data).appendTo("#snmp_container");
+				}
+
+				function draw_snmp_error () {
+					$("#error").html("we lost our connection to our data source");
+				}
+
+				function fetch_json(json_address){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							// console.log(response);
+							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+							// draw_table(jQuery.parseJSON(response));
+							draw_snmp(response);
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_snmp_error();
+						}
+					});
+				}
+
+			$(document).ready(function() {
+				fetch_json('/data.json');
+			});
+
+			window.setInterval(function(){
+				fetch_json('/data.json');
+			}, 1000);
+
+		</script>
+
+
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+	<script type="text/javascript">
+	// google graph code here to be pull in visualisation div.
+	</script>
+
+	</head>
+	<body>
+		<table class='XSL' id='snmp' cellspacing='0'>
+			<thead>
+				<tr>
+					<td align='center'>Node</td>
+					<td align='center'>Link</td>
+					<td align='center'>Bandwidth</td>
+					<td align='center'>Unicast</td>
+					<td align='center'>NonUnicast</td>
+					<td align='center'>Drop</td>
+					<td align='center'>Error</td>
+					<td align='center'>Query Time</td>
+				</tr>
+			</thead>
+			<tbody id='snmp_container'>
+			</tbody>
+		</table>
+		<div id='visualization' style='width: 840px; height: 600px;'></div>
+	</body>
+</html>

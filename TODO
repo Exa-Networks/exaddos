@@ -1,0 +1,4 @@
+use local copies of the javascript libraries used
+Remove the HTTP logging on stdout (stderr?)
+
+log the different thread issues so they can be reported in the interface
