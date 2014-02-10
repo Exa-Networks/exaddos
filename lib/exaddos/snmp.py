@@ -44,15 +44,19 @@ class _SNMPFactory (object):
 		mibBuilder = builder.MibBuilder().loadModules('SNMPv2-MIB', 'IF-MIB')
 
 		self.collection = {
-			'ifHCInOctets'    : mibBuilder.importSymbols('IF-MIB', 'ifHCInOctets')[0].getName() + (self.interface.snmp_index_port,),
+			'ifHCInOctets'    : mibBuilder.importSymbols('IF-MIB', 'ifHCInOctets')[0].getName() + (self.interface.snmp_index_vlan,),
 			'ifHCInUcastPkts' : mibBuilder.importSymbols('IF-MIB', 'ifHCInUcastPkts')[0].getName() + (self.interface.snmp_index_vlan,),
-			'ifInNUcastPkts'  : mibBuilder.importSymbols('IF-MIB', 'ifInNUcastPkts')[0].getName() + (self.interface.snmp_index_vlan,),
-			'ifInErrors'      : mibBuilder.importSymbols('IF-MIB', 'ifInErrors')[0].getName() + (self.interface.snmp_index_vlan,),
-			'ifInDiscards'    : mibBuilder.importSymbols('IF-MIB', 'ifInDiscards')[0].getName() + (self.interface.snmp_index_vlan,),
+			'ifInNUcastPkts'  : mibBuilder.importSymbols('IF-MIB', 'ifInNUcastPkts')[0].getName() + (self.interface.snmp_index_port,),
+			'ifInErrors'      : mibBuilder.importSymbols('IF-MIB', 'ifInErrors')[0].getName() + (self.interface.snmp_index_port,),
+			'ifInDiscards'    : mibBuilder.importSymbols('IF-MIB', 'ifInDiscards')[0].getName() + (self.interface.snmp_index_port,),
 			'sysDescr'        : mibBuilder.importSymbols('SNMPv2-MIB', 'sysDescr')[0].getName() + (0,),
 		}
 
-		self.description = str(self._get('sysDescr') or '-')
+		try:
+			self.description = str(self._get('sysDescr') or '-')
+			self.running = True
+		except KeyboardInterrupt:
+			self.running = False
 
 	def _get (self,key):
 		from pysnmp.entity.rfc3413.oneliner import cmdgen
@@ -109,10 +113,17 @@ class _SNMPFactory (object):
 		# make sure we are spending the SNMP requests
 		time.sleep(delay)
 
-		while True:
+		print >> sys.stderr, 'snmp poller starting %s' % self.name
+		sys.stderr.flush()
+
+		while self.running:
 			start = time.time()
 
-			new = self.collect()
+			try:
+				new = self.collect()
+			except KeyboardInterrupt:
+				self.running = False
+				continue
 
 			values['description'] = self.description
 			values['duration'] = float('%.2f' % max(0,time.time() - start))
@@ -132,6 +143,9 @@ class _SNMPFactory (object):
 
 			sleep = max(0,self.interface.snmp_frequency+start-time.time())
 			time.sleep(sleep)
+
+		print >> sys.stderr, 'snmp poller ended %s' % self.name
+		sys.stderr.flush()
 
 	def start (self):
 		self.snmp = Thread(self.serve,self.queue)
