@@ -11,6 +11,8 @@ import urlparse
 import SimpleHTTPServer
 import SocketServer
 import json
+import socket
+import struct
 
 from .thread import Thread
 
@@ -32,6 +34,28 @@ def snmp_json (data):
 			r.append(d)
 	return json.dumps(r)
 
+def flow_overall (data):
+	r = {}
+	for proto in data:
+		for counter in data[proto]:
+			r["%s_%s" % (proto,counter)] = data[proto][counter]
+	return json.dumps(r)
+
+def flow_traffic (data,direction,counter):
+	r = {}
+	for t in data:
+		for d in data[t]:
+			if d != direction: continue
+			for c in data[t][d]:
+				if c != counter: continue
+				info = data[t][d][c]
+				for number in info:
+					if number < 0: continue
+					ip = socket.inet_ntoa(struct.pack("!I", info[number]))
+					if ip not in r: r[ip] = {}
+					r[ip]['ip'] = ip
+					r[ip]['value'] = r[ip].get(c,0) + number
+	return json.dumps(list(r.itervalues()))
 
 class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 	# webroot is added to this class
@@ -72,12 +96,27 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 			elif path == "/json/flow/overall.json":
 				code = 200
 				encoding = 'text/json'
-				content = json.dumps(self.flow.overall())
+				content = flow_overall(self.flow.overall())
 
-			elif path == "/json/flow/traffic.json":
+			elif path == "/json/flow/listener.pckts.json":
 				code = 200
 				encoding = 'text/json'
-				content = json.dumps(self.flow.traffic())
+				content = flow_traffic(self.flow.traffic(),'sipv4','pckts')
+
+			elif path == "/json/flow/listener.bytes.json":
+				code = 200
+				encoding = 'text/json'
+				content = flow_traffic(self.flow.traffic(),'sipv4','bytes')
+
+			elif path == "/json/flow/speaker.pckts.json":
+				code = 200
+				encoding = 'text/json'
+				content = flow_traffic(self.flow.traffic(),'dipv4','pckts')
+
+			elif path == "/json/flow/speaker.bytes.json":
+				code = 200
+				encoding = 'text/json'
+				content = flow_traffic(self.flow.traffic(),'dipv4','bytes')
 
 			else:
 				code = 404

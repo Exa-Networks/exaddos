@@ -1,7 +1,10 @@
 <html>
 	<head>
-
 		<style type="text/css">
+			#content {
+				width: 840px;
+				height: 600px;
+			}
 
 			.warning-true {
 				background-color: #FF2070;
@@ -20,6 +23,18 @@
 				color: #901030;
 			}
 
+			#speaker_pckts {
+			}
+
+			#speaker_bytes {
+			}
+
+			#listener_pckts {
+			}
+
+			#listener_bytes {
+			}
+
 			table.XSL {
 				font-size: 12px;
 				margin: 5px;
@@ -29,14 +44,14 @@
 				/*border-left: thin #C2C2C2 solid;*/
 				/*border-top: thin #C2C2C2 solid;*/
 				border-top: thin #C2C2C2 solid;
-			    border-top-left-radius: 5px;
+			   border-top-left-radius: 5px;
 			}
 
 			table.XSL thead tr:first-of-type td:last-child {
 				/*border-right: thin #C2C2C2 solid;*/
 				/*border-top: thin #C2C2C2 solid;*/
 				border-top: thin #C2C2C2 solid;
-			    border-top-right-radius: 5px;
+			   border-top-right-radius: 5px;
 			}
 
 			table.XSL thead td:first-child {
@@ -92,8 +107,110 @@
 
 		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
 		<script type="text/javascript" src="/inc/jquery.tmpl.min.js"></script>
+		<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
 
-		<div id='error'></div>
+		<script type="text/javascript">
+				function draw_error (message) {
+					$("#error").html("<span class='error-true'>"+message+"</span>");
+				}
+
+				function fetch_stat(json_address){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							// console.log(response);
+							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+							// draw_table(jQuery.parseJSON(response));
+							$("#stat_container").empty();
+							$("#stat_template").tmpl(response).appendTo("#stat_container");
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our flow data source');
+						}
+					});
+				}
+
+				function fetch_snmp(json_address){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							// console.log(response);
+							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+							// draw_table(jQuery.parseJSON(response));
+							$("#snmp_container").empty();
+							$("#snmp_template").tmpl(response).appendTo("#snmp_container");
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our snmp data source');
+						}
+					});
+				}
+
+				function fetch_talker(json_address,what,counter){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							// console.log(response);
+							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+							// draw_table(jQuery.parseJSON(response));
+							$("#"+what+"_"+counter+"_container").empty();
+							$("#talker_template").tmpl(response).appendTo("#"+what+"_"+counter+"_container");
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our snmp data source');
+						}
+					});
+				}
+
+			$(document).ready(function() {
+				fetch_snmp('/json/snmp/interfaces.json');
+				fetch_stat('/json/flow/overall.json');
+				fetch_talker('/json/flow/listener.pckts.json','listener','pckts');
+				fetch_talker('/json/flow/listener.bytes.json','listener','bytes');
+				fetch_talker('/json/flow/speaker.pckts.json','speaker','pckts');
+				fetch_talker('/json/flow/speaker.bytes.json','speaker','bytes');
+			});
+
+			window.setInterval(function(){
+				fetch_snmp('/json/snmp/interfaces.json');
+				fetch_stat('/json/flow/overall.json');
+				fetch_talker('/json/flow/listener.pckts.json','listener','pckts');
+				fetch_talker('/json/flow/listener.bytes.json','listener','bytes');
+				fetch_talker('/json/flow/speaker.pckts.json','speaker','pckts');
+				fetch_talker('/json/flow/speaker.bytes.json','speaker','bytes');
+			}, 1000);
+
+			window.setInterval(function(){
+				$("#error").empty();
+			}, 10000);
+
+		</script>
+
+		<script id="snmp_error" type="text/x-jquery-tmpl">
+			<tr>
+				<td colspan="8">connection to server lost</td>
+			</tr>
+		</script>
+
+		<script id="stat_template" type="text/x-jquery-tmpl">
+			<tr id="${link}">
+				<td align='center'>Packets</td>
+				<td align='right'>${udp_pckts}</td>
+				<td align='right'>${tcp_pckts}</td>
+				<td align='right'>${other_pckts}</td>
+				<td align='right'>${total_pckts}</td>
+			</tr>
+			<tr id="${link}">
+				<td align='center'>Bytes</td>
+				<td align='right'>${udp_bytes}</td>
+				<td align='right'>${tcp_bytes}</td>
+				<td align='right'>${other_bytes}</td>
+				<td align='right'>${total_bytes}</td>
+			</tr>
+		</script>
 
 		<script id="snmp_template" type="text/x-jquery-tmpl">
 			<tr id="${link}">
@@ -108,75 +225,93 @@
 			</tr>
 		</script>
 
-		<script id="snmp_error" type="text/x-jquery-tmpl">
+		<script id="talker_template" type="text/x-jquery-tmpl">
 			<tr>
-				<td colspan="8">connection to server lost</td>
+				<td align='left'>${ip}</td>
+				<td align='right'>${value}</td>
 			</tr>
 		</script>
 
-
-		<script type="text/javascript">
-				function draw_snmp (data) {
-					$("#error").empty();
-					$("#snmp_container").empty();
-					$("#snmp_template").tmpl(data).appendTo("#snmp_container");
-				}
-
-				function draw_snmp_error () {
-					$("#error").html("<span class='error-true'>we lost our connection to our data source</span>");
-				}
-
-				function fetch_json(json_address){
-					$.ajax({
-						type: "GET",
-						url: json_address,
-						success: function (response) {
-							// console.log(response);
-							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
-							// draw_table(jQuery.parseJSON(response));
-							draw_snmp(response);
-						},
-						error: function (XMLHttpRequest, textStatus, errorThrown) {
-							draw_snmp_error();
-						}
-					});
-				}
-
-			$(document).ready(function() {
-				fetch_json('/json/snmp/interfaces.json');
-			});
-
-			window.setInterval(function(){
-				fetch_json('/json/snmp/interfaces.json');
-			}, 1000);
-
-		</script>
-
-
-	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-
-	<script type="text/javascript">
-	// google graph code here to be pull in visualisation div.
-	</script>
-
 	</head>
+
 	<body>
-		<table class='XSL' id='snmp' cellspacing='0'>
-			<thead>
-				<tr>
-					<td align='center'>Node</td>
-					<td align='center'>Location</td>
-					<td align='center'>Bandwidth</td>
-					<td align='center'>Unicast</td>
-					<td align='center'>NonUnicast</td>
-					<td align='center'>Drop</td>
-					<td align='center'>Error</td>
-					<td align='center'>Query Time</td>
-				</tr>
-			</thead>
-			<tbody id='snmp_container'>
-			</tbody>
-		</table>
-		<div id='visualization' style='width: 840px; height: 600px;'></div>
+		<div id='content'>
+			<div id='error'></div>
+
+			<table class='XSL' id='stat' cellspacing='0'>
+				<thead>
+					<tr>
+						<td align='center'>Counter</td>
+						<td align='center'>UDP</td>
+						<td align='center'>TCP</td>
+						<td align='center'>ICMP</td>
+						<td align='center'>Total</td>
+					</tr>
+				</thead>
+				<tbody id='stat_container'>
+				</tbody>
+			</table>
+
+			<table class='XSL' id='snmp' cellspacing='0'>
+				<thead>
+					<tr>
+						<td align='center'>Node</td>
+						<td align='center'>Location</td>
+						<td align='center'>Bandwidth</td>
+						<td align='center'>Unicast</td>
+						<td align='center'>NonUnicast</td>
+						<td align='center'>Drop</td>
+						<td align='center'>Error</td>
+						<td align='center'>Query Time</td>
+					</tr>
+				</thead>
+				<tbody id='snmp_container'>
+				</tbody>
+			</table>
+
+			<table class='XSL' id='speaker_pckts' cellspacing='0'>
+				<thead>
+					<tr>
+						<td align='center'>IP</td>
+						<td align='center'>Packets</td>
+					</tr>
+				</thead>
+				<tbody id='speaker_pckts_container'>
+				</tbody>
+			</table>
+
+			<table class='XSL' id='speaker_bytes' cellspacing='0'>
+				<thead>
+					<tr>
+						<td align='center'>IP</td>
+						<td align='center'>Bandwidth</td>
+					</tr>
+				</thead>
+				<tbody id='speaker_bytes_container'>
+				</tbody>
+			</table>
+
+			<table class='XSL' id='listener_pckts' cellspacing='0'>
+				<thead>
+					<tr>
+						<td align='center'>IP</td>
+						<td align='center'>Packets</td>
+					</tr>
+				</thead>
+				<tbody id='listener_pckts_container'>
+				</tbody>
+
+
+			<table class='XSL' id='listener_bytes' cellspacing='0'>
+				<thead>
+					<tr>
+						<td align='center'>IP</td>
+						<td align='center'>Bandwidth</td>
+					</tr>
+				</thead>
+				<tbody id='listener_bytes_container'>
+				</tbody>
+			</table>
+		</div>
 	</body>
 </html>

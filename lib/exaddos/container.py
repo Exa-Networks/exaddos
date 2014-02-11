@@ -53,7 +53,7 @@ class ContainerFlow (object):
 		self._traffic = {}
 
 		self._max_speaker = max_speakers
-		self.period = 3
+		self.period = 5
 
 		self.localhost = (127 << 24) + 1
 
