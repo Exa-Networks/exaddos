@@ -111,20 +111,18 @@ class value (object):
 	@staticmethod
 	def html(path):
 		paths = [
-			os.path.normpath(path),
 			os.path.normpath(os.path.join(os.path.join(os.sep,*os.path.join(value.location.split(os.sep)[:-3])),path)),
-			os.path.normpath(os.path.join(os.path.join(os.sep,*os.path.join(value.location.split(os.sep)[:-3])),'data','exaddos','html','index.html')),
+			os.path.normpath(os.path.join(os.path.join(os.sep,*os.path.join(value.location.split(os.sep)[:-3])),'data','exaddos','html')),
 			os.path.normpath(os.path.join('/','var','lib','exaddos','html',path)),
 		]
-		for database in paths:
-			if os.path.exists(database):
-				return database
+		for folder in paths:
+			if os.path.exists(folder) and os.path.isdir(folder):
+				return folder
 		raise TypeError('database could not be found')
 
 	@staticmethod
 	def database(path):
 		paths = [
-			os.path.normpath(path),
 			os.path.normpath(os.path.join(os.path.join(os.sep,*os.path.join(value.location.split(os.sep)[:-3])),path)),
 			os.path.normpath(os.path.join(os.path.join(os.sep,*os.path.join(value.location.split(os.sep)[:-3])),'data','exaddos','db','exaddos.sqlite3')),
 			os.path.normpath(os.path.join('/','var','lib','exaddos',path)),
@@ -165,7 +163,7 @@ defaults = {
 	},
 
 	'location' : {
-		'html'                 : (value.html,value.quote,        'index.html',     'the /index.html page'),
+		'html'                 : (value.html,value.quote,        'data/exaddos/html',  'the root of the html folder'),
 	},
 
 	'profile' : {
@@ -231,7 +229,7 @@ def _configuration (conf):
 		ini_file = None
 
 	if not ini_file:
-		raise ConfigurationError('could not find exaddos.conf file')
+		raise ConfigurationError('could not find exaddos configuration file')
 
 	ini = ConfigParser.ConfigParser()
 	ini.read(ini_file)

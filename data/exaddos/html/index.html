@@ -90,8 +90,8 @@
 			}
 		</style>
 
-		<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script>
-		<script type="text/javascript" src="https://raw.github.com/BorisMoore/jquery-tmpl/master/jquery.tmpl.min.js"></script>
+		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
+		<script type="text/javascript" src="/inc/jquery.tmpl.min.js"></script>
 
 		<div id='error'></div>
 
@@ -143,11 +143,11 @@
 				}
 
 			$(document).ready(function() {
-				fetch_json('/data.json');
+				fetch_json('/json/snmp.json');
 			});
 
 			window.setInterval(function(){
-				fetch_json('/data.json');
+				fetch_json('/json/snmp.json');
 			}, 1000);
 
 		</script>

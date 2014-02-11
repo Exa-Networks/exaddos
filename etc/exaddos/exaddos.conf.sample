@@ -12,7 +12,7 @@ port = 39200
 
 [exaddos.location]
 #database = 'data/exaddos/db/exaddos.sqlite3'
-index = 'data/exaddos/html/index.html'
+html = 'data/exaddos/html'
 
 [exaddos.profile]
 destination = 'stdout'

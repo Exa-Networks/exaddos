@@ -6,6 +6,7 @@ Created by Thomas Mangin on 2014-02-06.
 Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
+import os
 import urlparse
 import SimpleHTTPServer
 import SocketServer
@@ -42,13 +43,25 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 	# index is added to this class
 	# container is added to this class
 
+	def log_message (*args):
+		pass
+
 	def do_POST (self):
 		self.send_response(200)
 		self.send_header('Content-type', 'text/json')
 		self.end_headers()
 		self.wfile.write(json.dumps(self.container.duplicate()))
-
 		return
+
+	def valid_path (self,path):
+		for letter in path:
+			if letter.isalnum():
+				continue
+			if letter in ('-','_','.','/'):
+				continue
+			return False
+
+		return '..' not in path
 
 	def do_GET (self):
 		content = ''
@@ -57,32 +70,52 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		# Parse query data to find out what was requested
 		parsedParams = urlparse.urlparse(self.path)
 
-		if parsedParams.path == "/data.json":
-			code = 200
-			encoding = 'text/json'
-			content = snmp_json(self.container.duplicate())
+		path = parsedParams.path
 
-		elif parsedParams.path == "/":
+		if path.startswith('/json/'):
+			if path == "/json/snmp.json":
+				code = 200
+				encoding = 'text/json'
+				content = snmp_json(self.container.duplicate())
+
+		elif self.valid_path(path):
+			if path == '/':
+				path = '/index.html'
 			code = 200
-			encoding = 'text/html'
-			fname = 'index.html'
-		elif parsedParams.path == "/index.html":
-			code = 200
-			encoding = 'text/html'
-			fname = 'index.html'
+			if path.endswith('.js'):
+				encoding = 'application/x-javascript'
+			elif path.endswith('.html'):
+				encoding = 'text/html'
+			elif path.endswith('.css'):
+				encoding = 'text/css'
+			elif path.endswith(('.jpg','.jpeg')):
+				encoding = 'image/jpeg'
+			elif path.endswith('.png'):
+				encoding = 'image/png'
+			elif path.endswith('.gif'):
+				encoding = 'image/gif'
+			else:
+				encoding = 'text/plain'
+			fname = os.path.join(self.location,path.lstrip('/'))
+
+			if fname and os.path.isfile(fname):
+				try:
+					with open(fname,'r') as f:
+						content = f.read()
+				except Exception:
+					code = 500
+					encoding = 'text/html'
+					content = 'could not read the file'
+			else:
+				code = 404
+				encoding = 'text/html'
+				content = '404'
+
 		else:
 			code = 404
 			encoding = 'text/html'
+			content = '404'
 
-		if fname:
-			try:
-				with open(self.index,'r') as f:
-					content = f.read()
-			except Exception:
-				code = 500
-				content = 'FUN Interal error message here'
-		elif not content:
-			content = 'FUN 404 PAGE HERE LATER :-)'
 
 		self.send_response(code)
 		self.send_header('Content-type', encoding)
@@ -120,7 +153,7 @@ class HTTPServer (object):
 	servers = {}
 
 	def __init__ (self,configuration,container):
-		HTTPHandler.index = configuration.location.html
+		HTTPHandler.location = configuration.location.html
 		# This will be shared among all instrance
 		HTTPHandler.container = container
 
