@@ -158,8 +158,13 @@ defaults = {
 	},
 
 	'http' : {
-		'host'                 : (value.unquote,value.quote,     '127.0.0.1',      'the address the web server listens on'),
+		'host'                 : (value.unquote,value.quote,     '127.0.0.1',      'the tcp address the web server listens on'),
 		'port'                 : (value.integer,value.nop,       '39200',          'port the web server listens on'),
+	},
+
+	'ipfix' : {
+		'host'                 : (value.unquote,value.quote,     '127.0.0.1',      'the udp address the ipfix server listens on'),
+		'port'                 : (value.integer,value.nop,       '29300 ',         'port the web server listens on'),
 	},
 
 	'location' : {

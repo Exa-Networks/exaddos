@@ -11,34 +11,45 @@ import Queue
 
 from .http import HTTPServer
 from .snmp import SNMPClient
-from .container import Container
+from .flow import FlowServer
+from .container import ContainerSNMP,ContainerFlow
 
 # XXX: Look at ExaProxy Queue implementation
 _queue = Queue.Queue()
-_container = Container()
+_snmp_container = ContainerSNMP()
+_flow_container = ContainerFlow()
 
-_server = None
+_http = None
+_flow = None
 _snmp = None
 
 def setup (configuration):
-	global _server
+	global _http
+	global _flow
 	global _snmp
 
 	ip = configuration.http.host
 	port = configuration.http.port
-	_server = HTTPServer(configuration,_container)
-	_server.add(ip,port,configuration.location.html,_queue)
+	_http = HTTPServer(configuration,_snmp_container,_flow_container)
+	_http.add(ip,port,_queue)
 
-	_snmp = SNMPClient(_container)
+	_snmp = SNMPClient(_snmp_container)
 	interfaces = [_ for _ in configuration.keys() if _.isupper()]
 	for interface in interfaces:
 		_snmp.add(interface,configuration[interface],_queue)
 
+	ip = configuration.ipfix.host
+	port = configuration.ipfix.port
+	_flow = FlowServer(configuration,_flow_container)
+	_flow.add(ip,port,_queue)
+
 def run ():
 	print "starting snmp clients"
 	_snmp.run()
+	print "starting ipfix server"
+	_flow.run()
 	print "starting http server"
-	_server.run()
+	_http.run()
 
 	while True:
 		try:
@@ -55,8 +66,8 @@ def run ():
 		# sys.stdout.flush()
 
 		try:
-			_server.join()
-			if not _server.alive():
+			_http.join()
+			if not _http.alive():
 				print >> sys.stderr, "http server stopped / could not start, exiting"
 				break
 		except KeyboardInterrupt:
@@ -68,9 +79,9 @@ def run ():
 
 		if False:
 			r = ''
-			for link in _container.keys():
+			for link in _snmp_container.keys():
 				r += '\n%s\n' % link
-				for k,v in _container.get(link).iteritems():
+				for k,v in _snmp_container.get(link).iteritems():
 					r += '   %-15s:%s\n' % (k,v)
 			print r
 			sys.stdout.flush()

@@ -5,9 +5,9 @@ user = 'nobody'
 host = '127.0.0.1'
 port = 8080
 
-[exaddos.flow]
+[exaddos.ipfix]
 host = '127.0.0.1'
-port = 39200
+port = 29300
 
 
 [exaddos.location]

@@ -11,11 +11,8 @@ import urlparse
 import SimpleHTTPServer
 import SocketServer
 import json
-import locale
 
 from .thread import Thread
-
-locale.setlocale(locale.LC_ALL, 'en_US')
 
 def snmp_json (data):
 	s = {}
@@ -31,26 +28,20 @@ def snmp_json (data):
 			d = {'link':link}
 			information = data[link]
 			for k,v in information.iteritems():
-				if type(v) in (type(0), type(0L)):
-					d[k] = locale.format("%d", v, grouping=True)
-				else:
-					d[k] = v
+				d[k] = v
 			r.append(d)
 	return json.dumps(r)
 
 
 class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
-	# index is added to this class
-	# container is added to this class
+	# webroot is added to this class
+	# snmp is added to this class
+	# flow is added to this class
 
 	def log_message (*args):
 		pass
 
 	def do_POST (self):
-		self.send_response(200)
-		self.send_header('Content-type', 'text/json')
-		self.end_headers()
-		self.wfile.write(json.dumps(self.container.duplicate()))
 		return
 
 	def valid_path (self,path):
@@ -73,10 +64,25 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		path = parsedParams.path
 
 		if path.startswith('/json/'):
-			if path == "/json/snmp.json":
+			if path == "/json/snmp/interfaces.json":
 				code = 200
 				encoding = 'text/json'
-				content = snmp_json(self.container.duplicate())
+				content = snmp_json(self.snmp.data())
+
+			elif path == "/json/flow/overall.json":
+				code = 200
+				encoding = 'text/json'
+				content = json.dumps(self.flow.overall())
+
+			elif path == "/json/flow/traffic.json":
+				code = 200
+				encoding = 'text/json'
+				content = json.dumps(self.flow.traffic())
+
+			else:
+				code = 404
+				encoding = 'text/html'
+				content = '404'
 
 		elif self.valid_path(path):
 			if path == '/':
@@ -96,7 +102,7 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 				encoding = 'image/gif'
 			else:
 				encoding = 'text/plain'
-			fname = os.path.join(self.location,path.lstrip('/'))
+			fname = os.path.join(self.webroot,path.lstrip('/'))
 
 			if fname and os.path.isfile(fname):
 				try:
@@ -152,13 +158,13 @@ class _HTTPServerFactory (object):
 class HTTPServer (object):
 	servers = {}
 
-	def __init__ (self,configuration,container):
-		HTTPHandler.location = configuration.location.html
+	def __init__ (self,configuration,snmp,flow):
+		HTTPHandler.webroot = configuration.location.html
 		# This will be shared among all instrance
-		HTTPHandler.container = container
+		HTTPHandler.snmp = snmp
+		HTTPHandler.flow = flow
 
-
-	def add (self,host,port,index,queue):
+	def add (self,host,port,queue):
 		key = '%s:%d' % (host,port)
 		if key not in self.servers:
 			server = _HTTPServerFactory(host,port,queue)
