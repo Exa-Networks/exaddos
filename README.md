@@ -21,4 +21,3 @@ Our current solution includes:
  - [NFSEN](http://nfsen.sourceforge.net/) to collect, store and search flows
  - An ExaDDOS like internal solution, to quickly identify which IPs are causing an attack
 
-ExaDDOS is still under development, it is not yet production ready but will slowly get there.
