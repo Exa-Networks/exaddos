@@ -7,6 +7,7 @@ Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
 import os
+import sys
 import urlparse
 import SimpleHTTPServer
 import SocketServer
@@ -174,6 +175,9 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 			encoding = 'text/html'
 			content = '404'
 
+		if code == 404:
+			print >> sys.stderr, 'http server could not serve path %s' % path
+			sys.stderr.flush()
 
 		self.send_response(code)
 		self.send_header('Content-type', encoding)
