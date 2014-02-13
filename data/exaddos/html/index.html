@@ -1,9 +1,8 @@
 <html>
 	<head>
 		<style type="text/css">
-			#content {
-				width: 840px;
-				height: 600px;
+			h1 {
+				font-size: 15px;
 			}
 
 			.warning-true {
@@ -29,80 +28,64 @@
 			#speaker_bytes {
 			}
 
+			#speaker_flows {
+			}
+
 			#listener_pckts {
 			}
 
 			#listener_bytes {
 			}
 
-			table.XSL {
+			#listener_flows {
+			}
+
+			table.large {
+				padding: 0px
+				border: 1px solid black;
+				width:  910px;
 				font-size: 12px;
-				margin: 5px;
 			}
 
-			table.XSL thead tr:first-of-type td:first-child {
-				/*border-left: thin #C2C2C2 solid;*/
-				/*border-top: thin #C2C2C2 solid;*/
-				border-top: thin #C2C2C2 solid;
-			   border-top-left-radius: 5px;
+			table.large thead tr td {
+				border-bottom: 1px solid black;
+				padding: 0px
 			}
 
-			table.XSL thead tr:first-of-type td:last-child {
-				/*border-right: thin #C2C2C2 solid;*/
-				/*border-top: thin #C2C2C2 solid;*/
-				border-top: thin #C2C2C2 solid;
-			   border-top-right-radius: 5px;
-			}
-
-			table.XSL thead td:first-child {
-				/*border-left: thin #C2C2C2 solid;*/
-				border-left: thin #C2C2C2 solid;
-			}
-
-			table.XSL thead td:last-child {
-				/*border-right: thin #C2C2C2 solid;  */
-				border-right: thin #C2C2C2 solid;
-			}
-
-			table.XSL thead tr:first-of-type td{
-				/*border-top: thin #C2C2C2 solid;*/
-				border-top: thin #C2C2C2 solid;
-				background: linear-gradient(#E1E1E1, #D6D6D6);
-			}
-
-			table.XSL thead tr td{
-				background: #D6D6D6;
+			table.large thead tr td{
+				background: #C6C6E6;
 				padding: 5px;
 				min-width: 100px;
 			}
 
-			table.XSL tbody tr td:first-child{
-				/*border-left: thin #C2C2C2 solid;*/
-				border-left: thin #C2C2C2 solid;
-				border-right: thin rgba(194,194,194,0.8) solid;
+			table.large tbody tr:nth-child(even) td{
+				background: #E6E6E6;
 			}
 
-			table.XSL tbody tr td{
-				border-right: thin rgba(194,194,194,0.8) solid;
+			table.small {
+				padding: 0px
+				border: 1px solid black;
+				width:  304px;
+				font-size: 12px;
+				float:left;
+			}
+
+			table.small thead tr td {
+				border-bottom: 1px solid black;
+				padding: 0px
+			}
+
+			table.small thead tr td{
+				background: #C6C6E6;
 				padding: 5px;
+				min-width: 100px;
 			}
 
-			table.XSL tbody tr td:last-child{
-				/*border-right: thin rgba(194,194,194,0.8) solid; */
-				border-right: thin #C2C2C2 solid;
+			table.small tbody tr:nth-child(even) td{
+				background: #E6E6E6;
 			}
 
-			table.XSL tbody tr:last-of-type td{
-				/*border-bottom: thin #C2C2C2 solid; */
-				border-bottom: thin #C2C2C2 solid;
-			}
 
-			table.XSL tr td{
-				padding:5px;
-				border-left:thin solid grey;
-				border-right: thin solid grey;
-				border-bottom:thin grey solid;
-			}
 		</style>
 
 		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
@@ -114,14 +97,15 @@
 					$("#error").html("<span class='error-true'>"+message+"</span>");
 				}
 
+				// console.log(response);
+				// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+				// draw_table(jQuery.parseJSON(response));
+
 				function fetch_stat(json_address){
 					$.ajax({
 						type: "GET",
 						url: json_address,
 						success: function (response) {
-							// console.log(response);
-							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
-							// draw_table(jQuery.parseJSON(response));
 							$("#stat_container").empty();
 							$("#stat_template").tmpl(response).appendTo("#stat_container");
 						},
@@ -136,9 +120,6 @@
 						type: "GET",
 						url: json_address,
 						success: function (response) {
-							// console.log(response);
-							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
-							// draw_table(jQuery.parseJSON(response));
 							$("#snmp_container").empty();
 							$("#snmp_template").tmpl(response).appendTo("#snmp_container");
 						},
@@ -153,9 +134,6 @@
 						type: "GET",
 						url: json_address,
 						success: function (response) {
-							// console.log(response);
-							// Only if the data is not returned as 'text/json' otherwise the browser does it for us
-							// draw_table(jQuery.parseJSON(response));
 							$("#"+what+"_"+counter+"_container").empty();
 							$("#talker_template").tmpl(response).appendTo("#"+what+"_"+counter+"_container");
 						},
@@ -167,20 +145,24 @@
 
 			$(document).ready(function() {
 				fetch_snmp('/json/snmp/interfaces.json');
-				fetch_stat('/json/flow/overall.json');
-				fetch_talker('/json/flow/listener.pckts.json','listener','pckts');
-				fetch_talker('/json/flow/listener.bytes.json','listener','bytes');
-				fetch_talker('/json/flow/speaker.pckts.json','speaker','pckts');
-				fetch_talker('/json/flow/speaker.bytes.json','speaker','bytes');
+				fetch_stat('/json/flow/overall.summary.json');
+				fetch_talker('/json/flow/traffic.listener.pckts.json','listener','pckts');
+				fetch_talker('/json/flow/traffic.listener.bytes.json','listener','bytes');
+				fetch_talker('/json/flow/traffic.listener.flows.json','listener','flows');
+				fetch_talker('/json/flow/traffic.speaker.pckts.json','speaker','pckts');
+				fetch_talker('/json/flow/traffic.speaker.bytes.json','speaker','bytes');
+				fetch_talker('/json/flow/traffic.speaker.flows.json','speaker','flows');
 			});
 
 			window.setInterval(function(){
 				fetch_snmp('/json/snmp/interfaces.json');
-				fetch_stat('/json/flow/overall.json');
-				fetch_talker('/json/flow/listener.pckts.json','listener','pckts');
-				fetch_talker('/json/flow/listener.bytes.json','listener','bytes');
-				fetch_talker('/json/flow/speaker.pckts.json','speaker','pckts');
-				fetch_talker('/json/flow/speaker.bytes.json','speaker','bytes');
+				fetch_stat('/json/flow/overall.summary.json');
+				fetch_talker('/json/flow/traffic.listener.pckts.json','listener','pckts');
+				fetch_talker('/json/flow/traffic.listener.bytes.json','listener','bytes');
+				fetch_talker('/json/flow/traffic.listener.flows.json','listener','flows');
+				fetch_talker('/json/flow/traffic.speaker.pckts.json','speaker','pckts');
+				fetch_talker('/json/flow/traffic.speaker.bytes.json','speaker','bytes');
+				fetch_talker('/json/flow/traffic.speaker.flows.json','speaker','flows');
 			}, 1000);
 
 			window.setInterval(function(){
@@ -235,83 +217,110 @@
 	</head>
 
 	<body>
-		<div id='content'>
-			<div id='error'></div>
+		<div id='error'></div>
 
-			<table class='XSL' id='stat' cellspacing='0'>
-				<thead>
-					<tr>
-						<td align='center'>Counter</td>
-						<td align='center'>UDP</td>
-						<td align='center'>TCP</td>
-						<td align='center'>ICMP</td>
-						<td align='center'>Total</td>
-					</tr>
-				</thead>
-				<tbody id='stat_container'>
-				</tbody>
-			</table>
+		<h1>SNMP</h1>
 
-			<table class='XSL' id='snmp' cellspacing='0'>
-				<thead>
-					<tr>
-						<td align='center'>Node</td>
-						<td align='center'>Location</td>
-						<td align='center'>Bandwidth</td>
-						<td align='center'>Unicast</td>
-						<td align='center'>NonUnicast</td>
-						<td align='center'>Drop</td>
-						<td align='center'>Error</td>
-						<td align='center'>Query Time</td>
-					</tr>
-				</thead>
-				<tbody id='snmp_container'>
-				</tbody>
-			</table>
+		<table class='large' id='snmp'>
+			<thead>
+				<tr>
+					<td align='center'>Node</td>
+					<td align='center'>Location</td>
+					<td align='center'>Bandwidth</td>
+					<td align='center'>Unicast</td>
+					<td align='center'>NonUnicast</td>
+					<td align='center'>Drop</td>
+					<td align='center'>Error</td>
+					<td align='center'>Query Time</td>
+				</tr>
+			</thead>
+			<tbody id='snmp_container'>
+			</tbody>
+		</table>
 
-			<table class='XSL' id='speaker_pckts' cellspacing='0'>
-				<thead>
-					<tr>
-						<td align='center'>IP</td>
-						<td align='center'>Packets</td>
-					</tr>
-				</thead>
-				<tbody id='speaker_pckts_container'>
-				</tbody>
-			</table>
+		<h1>FLOW</h1>
 
-			<table class='XSL' id='speaker_bytes' cellspacing='0'>
-				<thead>
-					<tr>
-						<td align='center'>IP</td>
-						<td align='center'>Bandwidth</td>
-					</tr>
-				</thead>
-				<tbody id='speaker_bytes_container'>
-				</tbody>
-			</table>
+		<table class='large' id='stat'>
+			<thead>
+				<tr>
+					<td align='center'>Counter</td>
+					<td align='center'>UDP</td>
+					<td align='center'>TCP</td>
+					<td align='center'>ICMP</td>
+					<td align='center'>Total</td>
+				</tr>
+			</thead>
+			<tbody id='stat_container'>
+			</tbody>
+		</table>
 
-			<table class='XSL' id='listener_pckts' cellspacing='0'>
-				<thead>
-					<tr>
-						<td align='center'>IP</td>
-						<td align='center'>Packets</td>
-					</tr>
-				</thead>
-				<tbody id='listener_pckts_container'>
-				</tbody>
+		<table class='small' id='speaker_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>IP</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='speaker_pckts_container'>
+			</tbody>
+		</table>
 
+		<table class='small' id='speaker_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>IP</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='speaker_bytes_container'>
+			</tbody>
+		</table>
 
-			<table class='XSL' id='listener_bytes' cellspacing='0'>
-				<thead>
-					<tr>
-						<td align='center'>IP</td>
-						<td align='center'>Bandwidth</td>
-					</tr>
-				</thead>
-				<tbody id='listener_bytes_container'>
-				</tbody>
-			</table>
-		</div>
+		<table class='small' id='speaker_flows'>
+			<thead>
+				<tr>
+					<td align='center'>IP</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='speaker_flows_container'>
+			</tbody>
+		</table>
+
+		<br style='clear:both' />
+
+		<table class='small' id='listener_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>IP</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='listener_pckts_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='listener_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>IP</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='listener_bytes_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='listener_flows'>
+			<thead>
+				<tr>
+					<td align='center'>IP</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='listener_flows_container'>
+			</tbody>
+		</table>
+
 	</body>
 </html>

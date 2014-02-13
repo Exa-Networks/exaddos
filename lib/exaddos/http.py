@@ -16,6 +16,9 @@ import struct
 
 from .thread import Thread
 
+def nop (arg):
+	return arg
+
 def snmp_json (data):
 	s = {}
 	for link,information in data.iteritems():
@@ -52,15 +55,50 @@ def flow_traffic (data,direction,counter):
 				for number in info:
 					if number < 0: continue
 					ip = socket.inet_ntoa(struct.pack("!I", info[number]))
-					if ip not in r: r[ip] = {}
+					if ip not in r: r[ip] = {'value':0}
 					r[ip]['ip'] = ip
-					r[ip]['value'] = r[ip].get(c,0) + number
+					r[ip]['value'] += info[number]
 	return json.dumps(list(r.itervalues()))
 
-class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 	# webroot is added to this class
 	# snmp is added to this class
 	# flow is added to this class
+
+	# monkey patching 3.3 fix http://hg.python.org/cpython/rev/7e5d7ef4634d
+	def finish (self):
+		try:
+			SimpleHTTPServer.SimpleHTTPRequestHandler.finish(self)
+		except socket.error:
+			# should really check it is really ECONNABORTED
+			pass
+
+	def __init__ (self,*args,**kargs):
+		self._json = {
+			"/json/"                                 : ( 'text/json', json.dumps,     self.json_list,    () ),
+			"/json/snmp/data.json"                   : ( 'text/json', json.dumps,     self.snmp.data,    () ),
+			"/json/snmp/interfaces.json"             : ( 'text/json', snmp_json ,     self.snmp.data,    () ),
+			"/json/flow/overall.json"                : ( 'text/json', json.dumps,     self.flow.overall, () ),
+			"/json/flow/overall.summary.json"        : ( 'text/json', flow_overall,   self.flow.overall, () ),
+			"/json/flow/traffic.json"                : ( 'text/json', json.dumps,     self.flow.traffic, () ),
+			"/json/flow/traffic.listener.pckts.json" : ( 'text/json', flow_traffic,   self.flow.traffic, ('sipv4','pckts') ),
+			"/json/flow/traffic.listener.bytes.json" : ( 'text/json', flow_traffic,   self.flow.traffic, ('sipv4','bytes') ),
+			"/json/flow/traffic.listener.flows.json" : ( 'text/json', flow_traffic,   self.flow.traffic, ('sipv4','flows') ),
+			"/json/flow/traffic.speaker.pckts.json"  : ( 'text/json', flow_traffic,   self.flow.traffic, ('dipv4','pckts') ),
+			"/json/flow/traffic.speaker.bytes.json"  : ( 'text/json', flow_traffic,   self.flow.traffic, ('dipv4','bytes') ),
+			"/json/flow/traffic.speaker.flows.json"  : ( 'text/json', flow_traffic,   self.flow.traffic, ('dipv4','flows') ),
+		}
+		try:
+			SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self,*args,**kargs)
+		except socket.error:
+			# should really check it is really ECONNABORTED
+			pass
+
+	def json_list (self):
+		r = []
+		for name in self._json:
+			r.append(name)
+		return r
 
 	def log_message (*args):
 		pass
@@ -88,36 +126,11 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		path = parsedParams.path
 
 		if path.startswith('/json/'):
-			if path == "/json/snmp/interfaces.json":
-				code = 200
-				encoding = 'text/json'
-				content = snmp_json(self.snmp.data())
+			code = 200
 
-			elif path == "/json/flow/overall.json":
-				code = 200
-				encoding = 'text/json'
-				content = flow_overall(self.flow.overall())
-
-			elif path == "/json/flow/listener.pckts.json":
-				code = 200
-				encoding = 'text/json'
-				content = flow_traffic(self.flow.traffic(),'sipv4','pckts')
-
-			elif path == "/json/flow/listener.bytes.json":
-				code = 200
-				encoding = 'text/json'
-				content = flow_traffic(self.flow.traffic(),'sipv4','bytes')
-
-			elif path == "/json/flow/speaker.pckts.json":
-				code = 200
-				encoding = 'text/json'
-				content = flow_traffic(self.flow.traffic(),'dipv4','pckts')
-
-			elif path == "/json/flow/speaker.bytes.json":
-				code = 200
-				encoding = 'text/json'
-				content = flow_traffic(self.flow.traffic(),'dipv4','bytes')
-
+			if path in self._json:
+				encoding, presentation, source, param = self._json[path]
+				content = presentation(source(),*param)
 			else:
 				code = 404
 				encoding = 'text/html'

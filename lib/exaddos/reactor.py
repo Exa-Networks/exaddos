@@ -43,6 +43,7 @@ def setup (configuration):
 	_flow = FlowServer(configuration,_flow_container)
 	_flow.add(ip,port,_queue)
 
+
 def run ():
 	print "starting snmp clients"
 	_snmp.run()
@@ -50,6 +51,8 @@ def run ():
 	_flow.run()
 	print "starting http server"
 	_http.run()
+
+	# import pdb; pdb.set_trace()
 
 	while True:
 		try:

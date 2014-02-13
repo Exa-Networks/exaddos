@@ -84,6 +84,10 @@ class IPFIX (object):
 		TEMPLATE.packetDeltaCount,
 	]
 
+	nice = [
+		TEMPLATE.destinationTransportPort,
+	]
+
 	def __init__ (self,callback):
 		self.template = {}
 		self.callback = callback
@@ -236,7 +240,7 @@ class IPFIX (object):
 		if setid not in self.template:
 			return
 
-		extracted = {'epoch':epoch}
+		extracted = {'epoch':epoch,'flows':1}
 		format = self.template[setid]
 
 		for what in format:

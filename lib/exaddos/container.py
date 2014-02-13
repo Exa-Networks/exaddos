@@ -36,13 +36,6 @@ class ContainerSNMP (object):
 
 class ContainerFlow (object):
 
-	# _overall = {
-	# 	'tcp' : {'pckts': 0, 'bytes': 0},
-	# 	'udp' : {'pckts': 0, 'bytes': 0},
-	# 	'other': {'pckts': 0, 'bytes': 0},
-	# 	'total': {'pckts': 0, 'bytes': 0},
-	# }
-
 	def __init__ (self,max_speakers=5):
 		self.lock = Lock()
 
@@ -66,10 +59,10 @@ class ContainerFlow (object):
 		if minute not in counter:
 			counter[minute] = {}
 			for direction in ('sipv4','dipv4'):
-				for counter in ('bytes','pckts'):
+				for counter in ('bytes','pckts','flows'):
 					# numbers need to be unique, and lower than our traffic
-					self._threshold.setdefault(minute,{}).setdefault(direction,{})[counter] = list(range(0,-self._max_speaker,-1))
-					self._traffic.setdefault(minute,{}).setdefault(direction,{})[counter] = dict(zip(range(0,-self._max_speaker,-1),[self.localhost,]*self._max_speaker))
+					self._threshold.setdefault(minute,{}).setdefault(direction,{})[counter] = list(range(-1,-self._max_speaker-1,-1))
+					self._traffic.setdefault(minute,{}).setdefault(direction,{})[counter] = dict(zip(range(-1,-self._max_speaker-1,-1),[self.localhost,]*self._max_speaker))
 
 	def purge_minute (self,minute):
 		counter = self._counters
@@ -90,38 +83,46 @@ class ContainerFlow (object):
 
 			bytes = update['bytes']
 			pckts = update['pckts']
+			flows = update['flows']
 
 			total = overall.setdefault('total',{})
 			total['bytes'] = total.get('bytes',0) + bytes
 			total['pckts'] = total.get('pckts',0) + pckts
+			total['flows'] = total.get('flows',0) + flows
 
-			tcp = overall.setdefault('tcp',{})
-			tcp['bytes'] = tcp.get('bytes',0) + bytes
-			tcp['pckts'] = tcp.get('pckts',0) + pckts
+			if update['proto'] == 6:  # TCP
+				tcp = overall.setdefault('tcp',{})
+				tcp['bytes'] = tcp.get('bytes',0) + bytes
+				tcp['pckts'] = tcp.get('pckts',0) + pckts
+				tcp['flows'] = tcp.get('flows',0) + flows
+			elif update['proto'] == 17:  # UDP
+				udp = overall.setdefault('udp',{})
+				udp['bytes'] = udp.get('bytes',0) + bytes
+				udp['pckts'] = udp.get('pckts',0) + pckts
+				udp['flows'] = udp.get('flows',0) + flows
+			else:
+				other = overall.setdefault('other',{})
+				other['bytes'] = other.get('bytes',0) + bytes
+				other['pckts'] = other.get('pckts',0) + pckts
+				other['flows'] = other.get('flows',0) + flows
 
-			udp = overall.setdefault('udp',{})
-			udp['bytes'] = udp.get('bytes',0) + bytes
-			udp['pckts'] = udp.get('pckts',0) + pckts
-
-			other = overall.setdefault('other',{})
-			other['bytes'] = other.get('bytes',0) + bytes
-			other['pckts'] = other.get('pckts',0) + pckts
-
-			source = counter.setdefault(minute,{}).setdefault('sipv4',{}).setdefault('sipv4',{}).setdefault(update['sipv4'],{'pckts': 0, 'bytes': 0})
+			source = counter.setdefault(minute,{}).setdefault('sipv4',{}).setdefault(update['sipv4'],{'pckts': 0, 'bytes': 0, 'flows':0})
 			source['bytes'] += bytes
 			source['pckts'] += pckts
+			source['flows'] += flows
 
-			destination = counter.setdefault(minute,{}).setdefault('dipv4',{}).setdefault(update['dipv4'],{'pckts': 0, 'bytes': 0})
+			destination = counter.setdefault(minute,{}).setdefault('dipv4',{}).setdefault(update['dipv4'],{'pckts': 0, 'bytes': 0, 'flows':0})
 			destination['bytes'] += bytes
 			destination['pckts'] += pckts
+			destination['flows'] += flows
 
-			proto = counter.setdefault(minute,{}).setdefault('proto',{}).setdefault(update['proto'],{'pckts': 0, 'bytes': 0})
+			proto = counter.setdefault(minute,{}).setdefault('proto',{}).setdefault(update['proto'],{'pckts': 0, 'bytes': 0, 'flows':0})
 			proto['bytes'] += bytes
 			proto['pckts'] += pckts
-
+			proto['flows'] += flows
 
 			for direction,data in (('sipv4',source),('dipv4',destination)):
-				for counter in ('bytes','pckts'):
+				for counter in ('bytes','pckts','flows'):
 					traffic = self._traffic[minute][direction][counter]
 					maximum = self._threshold[minute][direction][counter]
 					drop = maximum[0]
