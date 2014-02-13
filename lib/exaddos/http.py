@@ -176,7 +176,7 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 			content = '404'
 
 		if code == 404:
-			print >> sys.stderr, 'http server could not serve path %s' % path
+			print >> sys.stderr, 'http server could not serve path %s -> %s' % (path, fname)
 			sys.stderr.flush()
 
 		self.send_response(code)
