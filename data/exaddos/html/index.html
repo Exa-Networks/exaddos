@@ -135,13 +135,14 @@
 						url: json_address,
 						success: function (response) {
 
-							var options=["sipv4_pckts","sipv4_bytes","sipv4_flows","dipv4_pckts","dipv4_bytes","dipv4_flows"];
-							for (i=0;i<options.length;i++) {
-								console.log("#"+options[i]+"_container");
-								console.log("#talker_"+options[i]+"_template");
-								console.log("#"+options[i]+"_container");
-								$("#"+options[i]+"_container").empty();
-								$("#talker_template").tmpl(response[options[i]]).appendTo("#"+options[i]+"_container");
+							var destination=["sipv4","dipv4"];
+							var counter=["pckts","bytes","flows"];
+
+							for (d=0;d<destination.length;d++) {
+								for (c=0;c<counter.length;c++) {
+									$("#"+destination[d]+"_"+counter[c]+"_container").empty();
+									$("#talker_template").tmpl(response[destination[d]][counter[c]]).appendTo("#"+destination[d]+"_"+counter[c]+"_container");
+								}
 							}
 						},
 						error: function (XMLHttpRequest, textStatus, errorThrown) {
