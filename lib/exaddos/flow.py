@@ -14,6 +14,8 @@ from .ipfix import IPFIX
 
 
 class _FlowServerFactory (object):
+	use_thread = True
+
 	def __init__ (self,host,port,container,queue):
 		print 'ipfix server on %s:%d' % (host,port)
 		self.flowd = None
@@ -34,18 +36,27 @@ class _FlowServerFactory (object):
 			print >> sys.stderr, 'could not start ipfix server'
 			raise
 
-		try:
+		if self.use_thread:
+			try:
+				while self.running:
+					data, addr = sock.recvfrom(8192)
+					self.parser.read(data)
+			except Exception,e:
+				self.running = False
+				raise e
+		else:
+			# debug without starting a thread
 			while self.running:
 				data, addr = sock.recvfrom(8192)
 				self.parser.read(data)
-		except Exception,e:
-			self.running = False
-			raise e
 
 	def start (self):
-		self.flowd = Thread(self.serve,self.queue)
-		self.flowd.daemon = True
-		self.flowd.start()
+		if self.use_thread:
+			self.flowd = Thread(self.serve,self.queue)
+			self.flowd.daemon = True
+			self.flowd.start()
+		else:
+			self.serve()
 
 	def alive (self):
 		return self.running

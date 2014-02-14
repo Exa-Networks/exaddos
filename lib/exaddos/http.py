@@ -50,15 +50,14 @@ def flow_traffic (data,direction,counter):
 	for t in data:
 		for d in data[t]:
 			if d != direction: continue
-			for c in data[t][d]:
-				if c != counter: continue
-				info = data[t][d][c]
-				for number in info:
-					if number < 0: continue
-					ip = socket.inet_ntoa(struct.pack("!I", info[number]))
-					if ip not in r: r[ip] = {'value':0}
-					r[ip]['ip'] = ip
-					r[ip]['value'] += info[number]
+			info = data[t][d][counter]
+			for key in info:
+				number,minute = key
+				if number < 0: continue
+				ip = socket.inet_ntoa(struct.pack("!I", info[key]))
+				if ip not in r: r[ip] = {'value':0}
+				r[ip]['ip'] = ip
+				r[ip]['value'] += number
 	return json.dumps(list(r.itervalues()))
 
 class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):

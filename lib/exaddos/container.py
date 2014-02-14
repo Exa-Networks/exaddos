@@ -6,6 +6,9 @@ Created by Thomas Mangin on 2014-02-06.
 Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
+# Ultimately these classes could use their own thread, a queue for local storage and redis as an option to allow multiple collection points
+
+import sys
 from threading import Lock
 from copy import deepcopy
 
@@ -62,7 +65,7 @@ class ContainerFlow (object):
 				for counter in ('bytes','pckts','flows'):
 					# numbers need to be unique, and lower than our traffic
 					self._threshold.setdefault(minute,{}).setdefault(direction,{})[counter] = list(range(-1,-self._max_speaker-1,-1))
-					self._traffic.setdefault(minute,{}).setdefault(direction,{})[counter] = dict(zip(range(-1,-self._max_speaker-1,-1),[self.localhost,]*self._max_speaker))
+					self._traffic.setdefault(minute,{}).setdefault(direction,{})[counter] = dict(zip(zip(range(-1,-self._max_speaker-1,-1),[minute,]*self._max_speaker),[self.localhost,]*self._max_speaker))
 
 	def purge_minute (self,minute):
 		counter = self._counters
@@ -84,6 +87,7 @@ class ContainerFlow (object):
 			bytes = update['bytes']
 			pckts = update['pckts']
 			flows = update['flows']
+			proto = update['proto']
 
 			total = overall.setdefault('total',{})
 			total['bytes'] = total.get('bytes',0) + bytes
@@ -106,6 +110,7 @@ class ContainerFlow (object):
 				other['pckts'] = other.get('pckts',0) + pckts
 				other['flows'] = other.get('flows',0) + flows
 
+			#source[time]['sipv4'/'dipv4'/'proto'][source ip]['pckts'/'bytes'/'flows']
 			source = counter.setdefault(minute,{}).setdefault('sipv4',{}).setdefault(update['sipv4'],{'pckts': 0, 'bytes': 0, 'flows':0})
 			source['bytes'] += bytes
 			source['pckts'] += pckts
@@ -125,19 +130,45 @@ class ContainerFlow (object):
 				for counter in ('bytes','pckts','flows'):
 					traffic = self._traffic[minute][direction][counter]
 					maximum = self._threshold[minute][direction][counter]
+					ip = update['sipv4'] if direction == 'sipv4' else update['dipv4']
+					value = data[counter]
 					drop = maximum[0]
 
-					value = data[counter]
 					if value > drop:
-						# prevent duplicate entries by cheating
-						while value in maximum:
-							value += 1
+						traffic_items = list(traffic.iteritems())
+						traffic_values, traffic_ips = zip(*traffic_items)
+						traffic_number,traffic_minutes = zip(*traffic_values)
 
-						maximum = sorted(maximum[1:] + [value,])
-						self._threshold[minute][direction][counter] = maximum
+						# updating the number of <counter> seen for a ip
+						if ip in traffic_ips:
+							# key is a (value,time) tuple
+							for key,host in traffic_items:
+								if ip == host:
+									traffic[key] = ip
+									print "mb", maximum,key
+									maximum = sorted(maximum + [value,])
+									print "ma",maximum,key
+									print
+									break
+						# replacing an entry with a new value
+						else:
+							print "MB",maximum,value
+							maximum = sorted(maximum[1:] + [value,])
+							print "MA",maximum,value
+							print
+							self._threshold[minute][direction][counter] = maximum
 
-						del self._traffic[minute][direction][counter][drop]
-						traffic[value] = update[direction]
+							for index,host in traffic_items:
+								if ip == host: break
+
+							timestamp = minute
+							# prevent duplicate entries using a unique timestamp
+							while timestamp in traffic_minutes:
+								timestamp += 1
+
+							# del traffic[drop]
+							del self._traffic[minute][direction][counter][index]
+							traffic[(value,timestamp)] = ip
 
 	# def counters (self):
 	# 	with self.lock:
@@ -150,5 +181,3 @@ class ContainerFlow (object):
 	def traffic (self):
 		with self.lock:
 			return deepcopy(self._traffic)
-
-
