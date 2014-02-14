@@ -148,6 +148,7 @@ class _SNMPFactory (object):
 		sys.stderr.flush()
 
 	def start (self):
+		print "starting snmp clients"
 		self.snmp = Thread(self.serve,self.queue)
 		self.snmp.daemon = True
 		self.snmp.start()

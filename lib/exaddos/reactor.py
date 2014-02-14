@@ -45,12 +45,15 @@ def setup (configuration):
 
 
 def run ():
-	print "starting snmp clients"
+	# we start one thread per router
+	# therefore stopping threads for debugging can not be a on/off thing
 	_snmp.run()
-	print "starting ipfix server"
-	_flow.run()
-	print "starting http server"
-	_http.run()
+
+	_flow.run(daemon=True)
+	_http.run(daemon=True)
+
+	_flow.run(daemon=False)
+	_http.run(daemon=False)
 
 	# import pdb; pdb.set_trace()
 

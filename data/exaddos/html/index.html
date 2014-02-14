@@ -134,8 +134,15 @@
 						type: "GET",
 						url: json_address,
 						success: function (response) {
-							$("#"+what+"_"+counter+"_container").empty();
-							$("#talker_template").tmpl(response).appendTo("#"+what+"_"+counter+"_container");
+
+							var options=["sipv4_pckts","sipv4_bytes","sipv4_flows","dipv4_pckts","dipv4_bytes","dipv4_flows"];
+							for (i=0;i<options.length;i++) {
+								console.log("#"+options[i]+"_container");
+								console.log("#talker_"+options[i]+"_template");
+								console.log("#"+options[i]+"_container");
+								$("#"+options[i]+"_container").empty();
+								$("#talker_template").tmpl(response[options[i]]).appendTo("#"+options[i]+"_container");
+							}
 						},
 						error: function (XMLHttpRequest, textStatus, errorThrown) {
 							draw_error('we lost our connection to our snmp data source');
@@ -146,28 +153,18 @@
 			$(document).ready(function() {
 				fetch_snmp('/json/snmp/interfaces.json');
 				fetch_stat('/json/flow/overall.summary.json');
-				fetch_talker('/json/flow/traffic.listener.pckts.json','listener','pckts');
-				fetch_talker('/json/flow/traffic.listener.bytes.json','listener','bytes');
-				fetch_talker('/json/flow/traffic.listener.flows.json','listener','flows');
-				fetch_talker('/json/flow/traffic.speaker.pckts.json','speaker','pckts');
-				fetch_talker('/json/flow/traffic.speaker.bytes.json','speaker','bytes');
-				fetch_talker('/json/flow/traffic.speaker.flows.json','speaker','flows');
+				fetch_talker('/json/flow/traffic.json');
 			});
 
 			window.setInterval(function(){
 				fetch_snmp('/json/snmp/interfaces.json');
 				fetch_stat('/json/flow/overall.summary.json');
-				fetch_talker('/json/flow/traffic.listener.pckts.json','listener','pckts');
-				fetch_talker('/json/flow/traffic.listener.bytes.json','listener','bytes');
-				fetch_talker('/json/flow/traffic.listener.flows.json','listener','flows');
-				fetch_talker('/json/flow/traffic.speaker.pckts.json','speaker','pckts');
-				fetch_talker('/json/flow/traffic.speaker.bytes.json','speaker','bytes');
-				fetch_talker('/json/flow/traffic.speaker.flows.json','speaker','flows');
+				fetch_talker('/json/flow/traffic.json');
 			}, 1000);
 
 			window.setInterval(function(){
 				$("#error").empty();
-			}, 10000);
+			}, 3000);
 
 		</script>
 
@@ -254,71 +251,71 @@
 			</tbody>
 		</table>
 
-		<table class='small' id='speaker_pckts'>
+		<table class='small' id='sipv4_pckts'>
 			<thead>
 				<tr>
 					<td align='center'>IP</td>
 					<td align='center'>Packets</td>
 				</tr>
 			</thead>
-			<tbody id='speaker_pckts_container'>
+			<tbody id='sipv4_pckts_container'>
 			</tbody>
 		</table>
 
-		<table class='small' id='speaker_bytes'>
+		<table class='small' id='sipv4_bytes'>
 			<thead>
 				<tr>
 					<td align='center'>IP</td>
 					<td align='center'>Bandwidth</td>
 				</tr>
 			</thead>
-			<tbody id='speaker_bytes_container'>
+			<tbody id='sipv4_bytes_container'>
 			</tbody>
 		</table>
 
-		<table class='small' id='speaker_flows'>
+		<table class='small' id='sipv4_flows'>
 			<thead>
 				<tr>
 					<td align='center'>IP</td>
 					<td align='center'>Flows</td>
 				</tr>
 			</thead>
-			<tbody id='speaker_flows_container'>
+			<tbody id='sipv4_flows_container'>
 			</tbody>
 		</table>
 
 		<br style='clear:both' />
 
-		<table class='small' id='listener_pckts'>
+		<table class='small' id='dipv4_pckts'>
 			<thead>
 				<tr>
 					<td align='center'>IP</td>
 					<td align='center'>Packets</td>
 				</tr>
 			</thead>
-			<tbody id='listener_pckts_container'>
+			<tbody id='dipv4_pckts_container'>
 			</tbody>
 		</table>
 
-		<table class='small' id='listener_bytes'>
+		<table class='small' id='dipv4_bytes'>
 			<thead>
 				<tr>
 					<td align='center'>IP</td>
 					<td align='center'>Bandwidth</td>
 				</tr>
 			</thead>
-			<tbody id='listener_bytes_container'>
+			<tbody id='dipv4_bytes_container'>
 			</tbody>
 		</table>
 
-		<table class='small' id='listener_flows'>
+		<table class='small' id='dipv4_flows'>
 			<thead>
 				<tr>
 					<td align='center'>IP</td>
 					<td align='center'>Flows</td>
 				</tr>
 			</thead>
-			<tbody id='listener_flows_container'>
+			<tbody id='dipv4_flows_container'>
 			</tbody>
 		</table>
 

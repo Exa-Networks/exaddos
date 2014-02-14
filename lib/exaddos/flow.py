@@ -51,6 +51,7 @@ class _FlowServerFactory (object):
 				self.parser.read(data)
 
 	def start (self):
+		print "starting ipfix server"
 		if self.use_thread:
 			self.flowd = Thread(self.serve,self.queue)
 			self.flowd.daemon = True
@@ -81,9 +82,12 @@ class FlowServer (object):
 			server.parent = self
 			self.servers[key] = server
 
-	def run (self):
+	def run (self,daemon):
 		for key in self.servers:
-			self.servers[key].start()
+			if daemon and self.servers[key].use_thread:
+				self.servers[key].start()
+			if not daemon and not self.servers[key].use_thread:
+				self.servers[key].start()
 
 	def join (self):
 		for key in self.servers:

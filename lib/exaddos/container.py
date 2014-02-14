@@ -145,17 +145,11 @@ class ContainerFlow (object):
 							for key,host in traffic_items:
 								if ip == host:
 									traffic[key] = ip
-									print "mb", maximum,key
 									maximum = sorted(maximum + [value,])
-									print "ma",maximum,key
-									print
 									break
 						# replacing an entry with a new value
 						else:
-							print "MB",maximum,value
 							maximum = sorted(maximum[1:] + [value,])
-							print "MA",maximum,value
-							print
 							self._threshold[minute][direction][counter] = maximum
 
 							for index,host in traffic_items:
