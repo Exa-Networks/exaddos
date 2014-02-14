@@ -74,7 +74,7 @@ def flow_traffic (data):
 		r[direction] = {}
 		for counter in ('bytes','pckts','flows'):
 			l = []
-			index = '%s_%s' % (d,c)
+			index = '%s_%s' % (direction,counter)
 			for number in reversed(maximum[index]):
 				for ip in set(best[index][number]):
 					l.append({'ip': ip, 'value': number})
