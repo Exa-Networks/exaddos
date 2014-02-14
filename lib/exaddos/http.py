@@ -70,13 +70,15 @@ def flow_traffic (data):
 						maximum[index] = sorted(maximum[index][1:]+[number,])
 
 	r = {}
-	for index in maximum.keys():
-		# XXXX: BIG harcoded max here with 5
-		l = []
-		for number in reversed(maximum[index]):
-			for ip in set(best[index][number]):
-				l.append({'ip': ip, 'value': number})
-		r[	index] = l[:nb_keeping]
+	for direction in ('sipv4','dipv4'):
+		r[direction] = {}
+		for counter in ('bytes','pckts','flows'):
+			l = []
+			index = '%s_%s' % (d,c)
+			for number in reversed(maximum[index]):
+				for ip in set(best[index][number]):
+					l.append({'ip': ip, 'value': number})
+			r[direction][counter] = l[:nb_keeping]
 
 	return json.dumps(r)
 

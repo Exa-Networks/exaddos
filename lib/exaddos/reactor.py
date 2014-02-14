@@ -52,8 +52,8 @@ def run ():
 	_flow.run(daemon=True)
 	_http.run(daemon=True)
 
-	_flow.run(daemon=False)
-	_http.run(daemon=False)
+	# _flow.run(daemon=False)
+	# _http.run(daemon=False)
 
 	# import pdb; pdb.set_trace()
 
