@@ -1,0 +1,337 @@
+<html>
+	<head>
+		<style type="text/css">
+			h1 {
+				font-size: 15px;
+			}
+
+			.warning-true {
+				background-color: #FF2070;
+			}
+
+			.warning-false {
+			}
+
+			#error {
+				display: inline-block;
+				text-align: center;
+				width: 100%;
+			}
+
+			.error-true {
+				color: #901030;
+			}
+
+			table.small {
+				padding: 0px
+				border: 1px solid black;
+				font-size: 12px;
+				float:left;
+			}
+
+			table.small thead tr td {
+				border-bottom: 1px solid black;
+				padding: 0px
+			}
+
+			table.small thead tr td{
+				background: #C6C6E6;
+				padding: 5px;
+				min-width: 108px;
+			}
+
+			table.small tbody tr:nth-child(even) td{
+				background: #E6E6E6;
+			}
+
+			table.small tbody tr td:nth-child(1) {
+				padding-left: 10px;
+				text-align: left;
+			}
+
+			table.small tbody tr td:nth-child(2) {
+				padding-right: 10px;
+				text-align: right;
+			}
+
+
+			h2 {
+				font-size: 15px;
+			}
+
+			.logo {
+			  display: block;
+			  float: left;
+			  width: 50px;
+			  margin-left: 0.6em;
+			  margin-bottom: 0.5em;
+			  margin-top: -0.7em;
+			}
+
+			nav.navigation {
+				letter-spacing: 0.1em;
+				font-size: 14px;
+				margin: 1em -1em 0;
+			}
+			nav.navigation ul {
+				overflow: hidden;
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+			nav.navigation li {
+				position: relative;
+				float: left;
+				width: 10%;
+				margin-left: 3.5%;
+				margin-bottom: 0;
+				padding: 0.25em 0;
+				text-align: center;
+				white-space: nowrap;
+			}
+			nav.navigation li:before {
+				position: absolute;
+				left: -0.8em;
+				font-size: 20px;
+				color: #BADEE2;
+				content: '/';
+			}
+			nav.navigation a {
+				display: inline-block;
+				text-transform: uppercase;
+				color: #5F6657;
+				font-size: 1.0625em;
+				border-bottom: 1px solid transparent;
+				position: relative;
+				left: 1px;
+			}
+			nav.navigation a:hover,
+			nav.navigation a:focus,
+			nav.navigation a.current {
+				border-bottom: 1px solid #BADEE2;
+				text-decoration: none;
+			}
+			nav.navigation .nl {
+				display: block;
+			}
+
+		</style>
+
+		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
+		<script type="text/javascript" src="/inc/jquery.tmpl.min.js"></script>
+		<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
+
+		<script type="text/javascript">
+				function draw_error (message) {
+					$("#error").html("<span class='error-true'>"+message+"</span>");
+				}
+
+				// console.log(response);
+				// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+				// draw_table(jQuery.parseJSON(response));
+
+				function fetch_talkers(json_address,what,counter){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							var destination = ["sipv4","dipv4","sport","dport"];
+							var counter = ["pckts","bytes","flows"];
+
+							for (var d in destination) {
+								for (var c in counter) {
+									$("#"+destination[d]+"_"+counter[c]+"_container").empty();
+									$("#talker_template").tmpl(response[destination[d]][counter[c]]).appendTo("#"+destination[d]+"_"+counter[c]+"_container");
+								}
+							}
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our snmp data source');
+						}
+					});
+				}
+
+			$(document).ready(function() {
+				fetch_talkers('/json/flow/talkers.json');
+			});
+
+			window.setInterval(function(){
+				fetch_talkers('/json/flow/talkers.json');
+			}, 1000);
+
+			window.setInterval(function(){
+				$("#error").empty();
+			}, 3000);
+
+		</script>
+
+		<script id="snmp_error" type="text/x-jquery-tmpl">
+			<tr>
+				<td colspan="8">connection to server lost</td>
+			</tr>
+		</script>
+
+		<script id="talker_template" type="text/x-jquery-tmpl">
+			<tr onclick="window.open('/view/${key}.html')">
+				<td align='left'>${key}</td>
+				<td align='right'>${value}</td>
+			</tr>
+		</script>
+
+	</head>
+
+	<body>
+		<a href="/">
+			<img class="logo" src="/exa.jpg" />
+		</a>
+		<nav class="navigation">
+			<ul>
+				<li><a href="/overview.html">Overview</a></li>
+				<li><a href="/talkers.html">Top talkers</a></li>
+			</ul>
+		</nav>
+
+		<div id='error'></div>
+
+		<br style='clear:both' />
+
+		<table class='small' id='sipv4_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>Src IP</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='sipv4_pckts_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='sipv4_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>Src IP</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='sipv4_bytes_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='sipv4_flows'>
+			<thead>
+				<tr>
+					<td align='center'>Src IP</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='sipv4_flows_container'>
+			</tbody>
+		</table>
+
+		<br style='clear:both' />
+
+		<table class='small' id='sport_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>Src Port</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='sport_pckts_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='sport_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>Src Port</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='sport_bytes_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='sport_flows'>
+			<thead>
+				<tr>
+					<td align='center'>Src Port</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='sport_flows_container'>
+			</tbody>
+		</table>
+
+		<br style='clear:both' />
+
+		<table class='small' id='dipv4_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>Dst IP</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='dipv4_pckts_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='dipv4_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>Dst IP</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='dipv4_bytes_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='dipv4_flows'>
+			<thead>
+				<tr>
+					<td align='center'>Dst IP</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='dipv4_flows_container'>
+			</tbody>
+		</table>
+
+		<br style='clear:both' />
+
+		<table class='small' id='dport_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>Dst Port</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='dport_pckts_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='dport_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>Dst Port</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='dport_bytes_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='dport_flows'>
+			<thead>
+				<tr>
+					<td align='center'>Dst Port</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='dport_flows_container'>
+			</tbody>
+		</table>
+
+	</body>
+</html>

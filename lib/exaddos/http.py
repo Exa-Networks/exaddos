@@ -132,7 +132,7 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 			"/json/"                                 : ( 'text/html', json_index,      self.json_list,    () ),
 			"/json/snmp/interfaces.json"             : ( 'text/json', json.dumps,     self.snmp.data,    () ),
 			"/json/flow/overview.json"               : ( 'text/json', json.dumps,     self.flow.overall, () ),
-			"/json/flow/traffic.json"                : ( 'text/json', flow_traffic,   self.flow.traffic, () ),
+			"/json/flow/talkers.json"                : ( 'text/json', flow_traffic,   self.flow.traffic, () ),
 		}
 		try:
 			SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self,*args,**kargs)

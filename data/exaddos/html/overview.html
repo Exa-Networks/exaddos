@@ -1,0 +1,306 @@
+	<html>
+	<head>
+		<style type="text/css">
+			h1 {
+				font-size: 15px;
+			}
+
+			.warning-true {
+				background-color: #FF2070;
+			}
+
+			.warning-false {
+			}
+
+			#error {
+				display: inline-block;
+				text-align: center;
+				width: 100%;
+			}
+
+			.error-true {
+				color: #901030;
+			}
+
+			table.large {
+				padding: 0px
+				border: 1px solid black;
+				width:  724px;
+				font-size: 12px;
+			}
+
+			table.large thead tr td {
+				border-bottom: 1px solid black;
+				padding: 0px;
+				text-align: center;
+			}
+
+			table.large thead tr td{
+				background: #C6C6E6;
+				padding: 5px;
+			}
+
+			table.large tbody tr:nth-child(even) td{
+				background: #E6E6E6;
+			}
+
+			table#snmp tbody tr td:nth-child(1) {
+				text-align: left;
+				padding-left: 10px;
+				min-width: 100px;
+			}
+
+			table#snmp tbody tr td:nth-child(2) {
+				text-align: left;
+				padding-left: 10px;
+				min-width: 140px;
+			}
+
+			table#snmp tbody tr td:nth-child(3) {
+				text-align: right;
+				padding-right: 10px;
+				min-width: 80px;
+			}
+
+			table#snmp tbody tr td:nth-child(n+4) {
+				text-align: right;
+				padding-right: 10px;
+				min-width: 60px;
+			}
+
+			table#stat tbody tr td:nth-child(-n+1) {
+				padding-left: 10px;
+				text-align: left;
+			}
+
+			table#stat tbody tr td:nth-child(n+2) {
+				text-align: right;
+				padding-right: 10px;
+			}
+
+			h2 {
+				font-size: 15px;
+			}
+
+			.logo {
+			  display: block;
+			  float: left;
+			  width: 50px;
+			  margin-left: 0.6em;
+			  margin-bottom: 0.5em;
+			  margin-top: -0.7em;
+			}
+
+			nav.navigation {
+				letter-spacing: 0.1em;
+				font-size: 14px;
+				margin: 1em -1em 0;
+			}
+			nav.navigation ul {
+				overflow: hidden;
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+			nav.navigation li {
+				position: relative;
+				float: left;
+				width: 10%;
+				margin-left: 3.5%;
+				margin-bottom: 0;
+				padding: 0.25em 0;
+				text-align: center;
+				white-space: nowrap;
+			}
+			nav.navigation li:before {
+				position: absolute;
+				left: -0.8em;
+				font-size: 20px;
+				color: #BADEE2;
+				content: '/';
+			}
+			nav.navigation a {
+				display: inline-block;
+				text-transform: uppercase;
+				color: #5F6657;
+				font-size: 1.0625em;
+				border-bottom: 1px solid transparent;
+				position: relative;
+				left: 1px;
+			}
+			nav.navigation a:hover,
+			nav.navigation a:focus,
+			nav.navigation a.current {
+				border-bottom: 1px solid #BADEE2;
+				text-decoration: none;
+			}
+			nav.navigation .nl {
+				display: block;
+			}
+
+		</style>
+
+		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
+		<script type="text/javascript" src="/inc/jquery.tmpl.min.js"></script>
+		<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
+
+		<script type="text/javascript">
+				function draw_error (message) {
+					$("#error").html("<span class='error-true'>"+message+"</span>");
+				}
+
+				// console.log(response);
+				// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+				// draw_table(jQuery.parseJSON(response));
+
+				function fetch_interfaces(json_address){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							$("#snmp_container").empty();
+							for (var key in response) {
+								var values = response[key];
+								values['link'] = key;
+								$("#snmp_template").tmpl(values).appendTo("#snmp_container");
+							}
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our snmp data source');
+						}
+					});
+				}
+
+				function fetch_stat(json_address){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							var counter = ["pckts","bytes","flows"];
+							var proto = ["udp","tcp","other","total"];
+							var view = [];
+
+							if (jQuery.isEmptyObject(response)) {
+								for (var p in proto) {
+									response[proto[p]] = new Array();
+									for (var c in counter) {
+										response[proto[p]][counter[c]] = 0;
+									}
+								}
+							}
+
+							var presentation = new Array();
+							presentation['pckts'] = 'Packets';
+							presentation['bytes'] = 'Bytes';
+							presentation['flows'] = 'Flows';
+
+							$("#stat_container").empty();
+							for (var c in counter) {
+								var data = new Array();
+								data['counter'] = presentation[counter[c]];
+								for (var p in proto) {
+									data[proto[p]] = response[proto[p]][counter[c]];
+								}
+								view[c] = data;
+							}
+							$("#stat_template").tmpl(view).appendTo("#stat_container");
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our flow data source');
+						}
+					});
+				}
+
+			$(document).ready(function() {
+				fetch_interfaces('/json/snmp/interfaces.json');
+				fetch_stat('/json/flow/overview.json');
+			});
+
+			window.setInterval(function(){
+				fetch_interfaces('/json/snmp/interfaces.json');
+				fetch_stat('/json/flow/overview.json');
+			}, 1000);
+
+			window.setInterval(function(){
+				$("#error").empty();
+			}, 3000);
+
+		</script>
+
+		<script id="snmp_error" type="text/x-jquery-tmpl">
+			<tr>
+				<td colspan="8">connection to server lost</td>
+			</tr>
+		</script>
+
+		<script id="snmp_template" type="text/x-jquery-tmpl">
+			<tr id="${link}">
+				<td class='warning-${warning}'>${link}</td>
+				<td class='warning-${warning}'>${description}</td>
+				<td class='warning-${warning}' align='right'>${ifHCInOctets}</td>
+				<td class='warning-${warning}' align='right'>${ifHCInUcastPkts}</td>
+				<td class='warning-${warning}' align='right'>${ifInNUcastPkts}</td>
+				<td class='warning-${warning}' align='right'>${ifInDiscards}</td>
+				<td class='warning-${warning}' align='right'>${ifInErrors}</td>
+				<td class='warning-${warning}' align='right'>${duration}</td>
+			</tr>
+		</script>
+
+		<script id="stat_template" type="text/x-jquery-tmpl">
+			<tr id="${link}">
+				<td align='left'>${counter}</td>
+				<td align='right'>${udp}</td>
+				<td align='right'>${tcp}</td>
+				<td align='right'>${other}</td>
+				<td align='right'>${total}</td>
+			</tr>
+		</script>
+
+	</head>
+
+	<body>
+		<a href="/">
+			<img class="logo" src="/exa.jpg" />
+		</a>
+		<nav class="navigation">
+			<ul>
+				<li><a href="/overview.html">Overview</a></li>
+				<li><a href="/talkers.html">Top talkers</a></li>
+			</ul>
+		</nav>
+
+		<div id='error'></div>
+
+		<table class='large' id='snmp'>
+			<thead>
+				<tr>
+					<td>Node</td>
+					<td>Location</td>
+					<td>Bandwidth</td>
+					<td>Unicast</td>
+					<td>NonUnicast</td>
+					<td>Drop</td>
+					<td>Error</td>
+					<td>Query Time</td>
+				</tr>
+			</thead>
+			<tbody id='snmp_container'>
+			</tbody>
+		</table>
+
+		<table class='large' id='stat'>
+			<thead>
+				<tr>
+					<td>Counter</td>
+					<td>UDP</td>
+					<td>TCP</td>
+					<td>ICMP</td>
+					<td>Total</td>
+				</tr>
+			</thead>
+			<tbody id='stat_container'>
+			</tbody>
+		</table>
+
+	</body>
+</html>
