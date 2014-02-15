@@ -101,30 +101,55 @@
 				// Only if the data is not returned as 'text/json' otherwise the browser does it for us
 				// draw_table(jQuery.parseJSON(response));
 
-				function fetch_stat(json_address){
-					$.ajax({
-						type: "GET",
-						url: json_address,
-						success: function (response) {
-							$("#stat_container").empty();
-							$("#stat_template").tmpl(response).appendTo("#stat_container");
-						},
-						error: function (XMLHttpRequest, textStatus, errorThrown) {
-							draw_error('we lost our connection to our flow data source');
-						}
-					});
-				}
-
-				function fetch_snmp(json_address){
+				function fetch_interfaces(json_address){
 					$.ajax({
 						type: "GET",
 						url: json_address,
 						success: function (response) {
 							$("#snmp_container").empty();
-							$("#snmp_template").tmpl(response).appendTo("#snmp_container");
+							for (var key in response) {
+								var values = response[key];
+								values['link'] = key;
+								$("#snmp_template").tmpl(values).appendTo("#snmp_container");
+							}
 						},
 						error: function (XMLHttpRequest, textStatus, errorThrown) {
 							draw_error('we lost our connection to our snmp data source');
+						}
+					});
+				}
+
+				function fetch_stat(json_address){
+					$.ajax({
+						type: "GET",
+						url: json_address,
+						success: function (response) {
+							if (jQuery.isEmptyObject(response)) {
+								return;
+							}
+
+							var presentation = new Array();
+							presentation['pckts'] = 'Packets';
+							presentation['bytes'] = 'Bytes';
+							presentation['flows'] = 'Flows';
+
+							var counter = ["pckts","bytes","flows"];
+							var proto = ["udp","tcp","other","total"];
+							var view = [];
+
+							$("#stat_container").empty();
+							for (c=0;c<counter.length;c++) {
+								var data = new Array();
+								data['counter'] = presentation[counter[c]];
+								for (p=0;p<proto.length;p++) {
+									data[proto[p]] = response[proto[p]][counter[c]];
+								}
+								view[c] = data;
+							}
+							$("#stat_template").tmpl(view).appendTo("#stat_container");
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our flow data source');
 						}
 					});
 				}
@@ -134,9 +159,8 @@
 						type: "GET",
 						url: json_address,
 						success: function (response) {
-
-							var destination=["sipv4","dipv4"];
-							var counter=["pckts","bytes","flows"];
+							var destination = ["sipv4","dipv4"];
+							var counter = ["pckts","bytes","flows"];
 
 							for (d=0;d<destination.length;d++) {
 								for (c=0;c<counter.length;c++) {
@@ -152,15 +176,15 @@
 				}
 
 			$(document).ready(function() {
-				fetch_snmp('/json/snmp/interfaces.json');
-				fetch_stat('/json/flow/overall.summary.json');
-				fetch_talker('/json/flow/traffic.json');
+				fetch_interfaces('/json/snmp/interfaces.json');
+				fetch_stat('/json/flow/overview.json');
+				// fetch_talker('/json/flow/traffic.json');
 			});
 
 			window.setInterval(function(){
-				fetch_snmp('/json/snmp/interfaces.json');
-				fetch_stat('/json/flow/overall.summary.json');
-				fetch_talker('/json/flow/traffic.json');
+				fetch_interfaces('/json/snmp/interfaces.json');
+				fetch_stat('/json/flow/overview.json');
+				// fetch_talker('/json/flow/traffic.json');
 			}, 1000);
 
 			window.setInterval(function(){
@@ -177,18 +201,11 @@
 
 		<script id="stat_template" type="text/x-jquery-tmpl">
 			<tr id="${link}">
-				<td align='center'>Packets</td>
-				<td align='right'>${udp_pckts}</td>
-				<td align='right'>${tcp_pckts}</td>
-				<td align='right'>${other_pckts}</td>
-				<td align='right'>${total_pckts}</td>
-			</tr>
-			<tr id="${link}">
-				<td align='center'>Bytes</td>
-				<td align='right'>${udp_bytes}</td>
-				<td align='right'>${tcp_bytes}</td>
-				<td align='right'>${other_bytes}</td>
-				<td align='right'>${total_bytes}</td>
+				<td align='center'>${counter}</td>
+				<td align='right'>${udp}</td>
+				<td align='right'>${tcp}</td>
+				<td align='right'>${other}</td>
+				<td align='right'>${total}</td>
 			</tr>
 		</script>
 
@@ -206,7 +223,7 @@
 		</script>
 
 		<script id="talker_template" type="text/x-jquery-tmpl">
-			<tr>
+			<tr onclick="window.open('/view/${ip}.html')">
 				<td align='left'>${ip}</td>
 				<td align='right'>${value}</td>
 			</tr>

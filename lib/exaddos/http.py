@@ -99,18 +99,9 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 	def __init__ (self,*args,**kargs):
 		self._json = {
 			"/json/"                                 : ( 'text/json', json.dumps,     self.json_list,    () ),
-			"/json/snmp/data.json"                   : ( 'text/json', json.dumps,     self.snmp.data,    () ),
-			"/json/snmp/interfaces.json"             : ( 'text/json', snmp_json ,     self.snmp.data,    () ),
-			"/json/flow/overall.json"                : ( 'text/json', json.dumps,     self.flow.overall, () ),
-			"/json/flow/overall.summary.json"        : ( 'text/json', flow_overall,   self.flow.overall, () ),
-			#"/json/flow/traffic.json"                : ( 'text/json', json.dumps,     self.flow.traffic, () ),
+			"/json/snmp/interfaces.json"             : ( 'text/json', json.dumps,     self.snmp.data,    () ),
+			"/json/flow/overview.json"               : ( 'text/json', json.dumps,     self.flow.overall, () ),
 			"/json/flow/traffic.json"                : ( 'text/json', flow_traffic,   self.flow.traffic, () ),
-			# "/json/flow/traffic.listener.pckts.json" : ( 'text/json', flow_traffic,   self.flow.traffic, ('sipv4','pckts') ),
-			# "/json/flow/traffic.listener.bytes.json" : ( 'text/json', flow_traffic,   self.flow.traffic, ('sipv4','bytes') ),
-			# "/json/flow/traffic.listener.flows.json" : ( 'text/json', flow_traffic,   self.flow.traffic, ('sipv4','flows') ),
-			# "/json/flow/traffic.speaker.pckts.json"  : ( 'text/json', flow_traffic,   self.flow.traffic, ('dipv4','pckts') ),
-			# "/json/flow/traffic.speaker.bytes.json"  : ( 'text/json', flow_traffic,   self.flow.traffic, ('dipv4','bytes') ),
-			# "/json/flow/traffic.speaker.flows.json"  : ( 'text/json', flow_traffic,   self.flow.traffic, ('dipv4','flows') ),
 		}
 		try:
 			SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self,*args,**kargs)
