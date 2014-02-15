@@ -124,8 +124,17 @@
 						type: "GET",
 						url: json_address,
 						success: function (response) {
+							var counter = ["pckts","bytes","flows"];
+							var proto = ["udp","tcp","other","total"];
+							var view = [];
+
 							if (jQuery.isEmptyObject(response)) {
-								return;
+								for (var p in proto) {
+									response[proto[p]] = new Array();
+									for (var c in counter) {
+										response[proto[p]][counter[c]] = 0;
+									}
+								}
 							}
 
 							var presentation = new Array();
@@ -133,15 +142,11 @@
 							presentation['bytes'] = 'Bytes';
 							presentation['flows'] = 'Flows';
 
-							var counter = ["pckts","bytes","flows"];
-							var proto = ["udp","tcp","other","total"];
-							var view = [];
-
 							$("#stat_container").empty();
-							for (c=0;c<counter.length;c++) {
+							for (var c in counter) {
 								var data = new Array();
 								data['counter'] = presentation[counter[c]];
-								for (p=0;p<proto.length;p++) {
+								for (var p in proto) {
 									data[proto[p]] = response[proto[p]][counter[c]];
 								}
 								view[c] = data;
@@ -162,8 +167,8 @@
 							var destination = ["sipv4","dipv4"];
 							var counter = ["pckts","bytes","flows"];
 
-							for (d=0;d<destination.length;d++) {
-								for (c=0;c<counter.length;c++) {
+							for (var d in destination) {
+								for (var c in counter) {
 									$("#"+destination[d]+"_"+counter[c]+"_container").empty();
 									$("#talker_template").tmpl(response[destination[d]][counter[c]]).appendTo("#"+destination[d]+"_"+counter[c]+"_container");
 								}
@@ -178,13 +183,13 @@
 			$(document).ready(function() {
 				fetch_interfaces('/json/snmp/interfaces.json');
 				fetch_stat('/json/flow/overview.json');
-				// fetch_talker('/json/flow/traffic.json');
+				fetch_talker('/json/flow/traffic.json');
 			});
 
 			window.setInterval(function(){
 				fetch_interfaces('/json/snmp/interfaces.json');
 				fetch_stat('/json/flow/overview.json');
-				// fetch_talker('/json/flow/traffic.json');
+				fetch_talker('/json/flow/traffic.json');
 			}, 1000);
 
 			window.setInterval(function(){
