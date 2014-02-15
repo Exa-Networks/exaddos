@@ -65,14 +65,26 @@ CONVERT = {
 	(TEMPLATE.destinationIPv4Address,4)  : '>I',
 	(TEMPLATE.destinationIPv4Address,8)  : '>Q',
 
+	(TEMPLATE.sourceTransportPort,1)  : '>B',
+	(TEMPLATE.sourceTransportPort,2)  : '>H',
+	(TEMPLATE.sourceTransportPort,4)  : '>I',
+	(TEMPLATE.sourceTransportPort,8)  : '>Q',
+
+	(TEMPLATE.destinationTransportPort,1)  : '>B',
+	(TEMPLATE.destinationTransportPort,2)  : '>H',
+	(TEMPLATE.destinationTransportPort,4)  : '>I',
+	(TEMPLATE.destinationTransportPort,8)  : '>Q',
+
 }
 
 NAME = {
-	TEMPLATE.protocolIdentifier     : 'proto',
-	TEMPLATE.sourceIPv4Address      : 'sipv4',
-	TEMPLATE.destinationIPv4Address : 'dipv4',
-	TEMPLATE.octetDeltaCount        : 'bytes',
-	TEMPLATE.packetDeltaCount       : 'pckts',
+	TEMPLATE.protocolIdentifier       : 'proto',
+	TEMPLATE.sourceIPv4Address        : 'sipv4',
+	TEMPLATE.destinationIPv4Address   : 'dipv4',
+	TEMPLATE.octetDeltaCount          : 'bytes',
+	TEMPLATE.packetDeltaCount         : 'pckts',
+	TEMPLATE.sourceTransportPort      : 'sport',
+	TEMPLATE.destinationTransportPort : 'dport',
 }
 
 class IPFIX (object):
@@ -82,9 +94,7 @@ class IPFIX (object):
 		TEMPLATE.destinationIPv4Address,
 		TEMPLATE.octetDeltaCount,
 		TEMPLATE.packetDeltaCount,
-	]
-
-	nice = [
+		TEMPLATE.sourceTransportPort,
 		TEMPLATE.destinationTransportPort,
 	]
 

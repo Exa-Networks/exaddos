@@ -8,7 +8,6 @@ Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 
 # Ultimately these classes could use their own thread, a queue for local storage and redis as an option to allow multiple collection points
 
-import sys
 from threading import Lock
 from copy import deepcopy
 
@@ -51,21 +50,26 @@ class ContainerFlow (object):
 		self._max_speaker = max_speakers
 		self.period = 5
 
-		self.localhost = (127 << 24) + 1
-
 		for minute in range(0,self.period):
 			self.make_minute(minute)
 
 	def make_minute (self,minute):
 		counter = self._counters
 
+		default = {
+			'sipv4' : (127 << 24) + 1,
+			'dipv4' : (127 << 24) + 1,
+			'sport' : 0,
+			'dport' : 0,
+		}
+
 		if minute not in counter:
 			counter[minute] = {}
-			for direction in ('sipv4','dipv4'):
+			for direction in ('sipv4','dipv4','sport','dport'):
 				for counter in ('bytes','pckts','flows'):
 					# numbers need to be unique, and lower than our traffic
 					self._threshold.setdefault(minute,{}).setdefault(direction,{})[counter] = list(range(-1,-self._max_speaker-1,-1))
-					self._traffic.setdefault(minute,{}).setdefault(direction,{})[counter] = dict(zip(zip(range(-1,-self._max_speaker-1,-1),[minute,]*self._max_speaker),[self.localhost,]*self._max_speaker))
+					self._traffic.setdefault(minute,{}).setdefault(direction,{})[counter] = dict(zip(zip(range(-1,-self._max_speaker-1,-1),[minute,]*self._max_speaker),[default[direction],]*self._max_speaker))
 
 	def purge_minute (self,minute):
 		counter = self._counters
@@ -110,27 +114,43 @@ class ContainerFlow (object):
 				other['pckts'] = other.get('pckts',0) + pckts
 				other['flows'] = other.get('flows',0) + flows
 
-			#source[time]['sipv4'/'dipv4'/'proto'][source ip]['pckts'/'bytes'/'flows']
-			source = counter.setdefault(minute,{}).setdefault('sipv4',{}).setdefault(update['sipv4'],{'pckts': 0, 'bytes': 0, 'flows':0})
-			source['bytes'] += bytes
-			source['pckts'] += pckts
-			source['flows'] += flows
+			#sipv4[time]['sipv4'/'dipv4'/'proto'][sipv4 ip]['pckts'/'bytes'/'flows']
+			sipv4 = counter.setdefault(minute,{}).setdefault('sipv4',{}).setdefault(update['sipv4'],{'pckts': 0, 'bytes': 0, 'flows':0})
+			sipv4['bytes'] += bytes
+			sipv4['pckts'] += pckts
+			sipv4['flows'] += flows
 
-			destination = counter.setdefault(minute,{}).setdefault('dipv4',{}).setdefault(update['dipv4'],{'pckts': 0, 'bytes': 0, 'flows':0})
-			destination['bytes'] += bytes
-			destination['pckts'] += pckts
-			destination['flows'] += flows
+			dipv4 = counter.setdefault(minute,{}).setdefault('dipv4',{}).setdefault(update['dipv4'],{'pckts': 0, 'bytes': 0, 'flows':0})
+			dipv4['bytes'] += bytes
+			dipv4['pckts'] += pckts
+			dipv4['flows'] += flows
 
 			proto = counter.setdefault(minute,{}).setdefault('proto',{}).setdefault(update['proto'],{'pckts': 0, 'bytes': 0, 'flows':0})
 			proto['bytes'] += bytes
 			proto['pckts'] += pckts
 			proto['flows'] += flows
 
-			for direction,data in (('sipv4',source),('dipv4',destination)):
+			if 'sport' in update:
+				sport = counter.setdefault(minute,{}).setdefault('sport',{}).setdefault(update['sport'],{'pckts': 0, 'bytes': 0, 'flows':0})
+				sport['bytes'] += bytes
+				sport['pckts'] += pckts
+				sport['flows'] += flows
+			else:
+				sport = None
+
+			if 'dport' in update:
+				dport = counter.setdefault(minute,{}).setdefault('dport',{}).setdefault(update['dport'],{'pckts': 0, 'bytes': 0, 'flows':0})
+				dport['bytes'] += bytes
+				dport['pckts'] += pckts
+				dport['flows'] += flows
+			else:
+				dport = None
+
+			for direction,data in (('sipv4',sipv4),('dipv4',dipv4),('sport',sport),('dport',dport)):
 				for counter in ('bytes','pckts','flows'):
 					traffic = self._traffic[minute][direction][counter]
 					maximum = self._threshold[minute][direction][counter]
-					ip = update['sipv4'] if direction == 'sipv4' else update['dipv4']
+					ip = update[direction]
 					value = data[counter]
 					drop = maximum[0]
 

@@ -164,7 +164,7 @@
 						type: "GET",
 						url: json_address,
 						success: function (response) {
-							var destination = ["sipv4","dipv4"];
+							var destination = ["sipv4","dipv4","sport","dport"];
 							var counter = ["pckts","bytes","flows"];
 
 							for (var d in destination) {
@@ -228,8 +228,8 @@
 		</script>
 
 		<script id="talker_template" type="text/x-jquery-tmpl">
-			<tr onclick="window.open('/view/${ip}.html')">
-				<td align='left'>${ip}</td>
+			<tr onclick="window.open('/view/${key}.html')">
+				<td align='left'>${key}</td>
 				<td align='right'>${value}</td>
 			</tr>
 		</script>
@@ -277,7 +277,7 @@
 		<table class='small' id='sipv4_pckts'>
 			<thead>
 				<tr>
-					<td align='center'>IP</td>
+					<td align='center'>Src IP</td>
 					<td align='center'>Packets</td>
 				</tr>
 			</thead>
@@ -288,7 +288,7 @@
 		<table class='small' id='sipv4_bytes'>
 			<thead>
 				<tr>
-					<td align='center'>IP</td>
+					<td align='center'>Src IP</td>
 					<td align='center'>Bandwidth</td>
 				</tr>
 			</thead>
@@ -299,7 +299,7 @@
 		<table class='small' id='sipv4_flows'>
 			<thead>
 				<tr>
-					<td align='center'>IP</td>
+					<td align='center'>Src IP</td>
 					<td align='center'>Flows</td>
 				</tr>
 			</thead>
@@ -312,7 +312,7 @@
 		<table class='small' id='dipv4_pckts'>
 			<thead>
 				<tr>
-					<td align='center'>IP</td>
+					<td align='center'>Dst IP</td>
 					<td align='center'>Packets</td>
 				</tr>
 			</thead>
@@ -323,7 +323,7 @@
 		<table class='small' id='dipv4_bytes'>
 			<thead>
 				<tr>
-					<td align='center'>IP</td>
+					<td align='center'>Dst IP</td>
 					<td align='center'>Bandwidth</td>
 				</tr>
 			</thead>
@@ -334,11 +334,81 @@
 		<table class='small' id='dipv4_flows'>
 			<thead>
 				<tr>
-					<td align='center'>IP</td>
+					<td align='center'>Dst IP</td>
 					<td align='center'>Flows</td>
 				</tr>
 			</thead>
 			<tbody id='dipv4_flows_container'>
+			</tbody>
+		</table>
+
+		<br style='clear:both' />
+
+		<table class='small' id='sport_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>Src Port</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='sport_pckts_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='sport_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>Src Port</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='sport_bytes_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='sport_flows'>
+			<thead>
+				<tr>
+					<td align='center'>Src Port</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='sport_flows_container'>
+			</tbody>
+		</table>
+
+		<br style='clear:both' />
+
+		<table class='small' id='dport_pckts'>
+			<thead>
+				<tr>
+					<td align='center'>Dst Port</td>
+					<td align='center'>Packets</td>
+				</tr>
+			</thead>
+			<tbody id='dport_pckts_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='dport_bytes'>
+			<thead>
+				<tr>
+					<td align='center'>Dst Port</td>
+					<td align='center'>Bandwidth</td>
+				</tr>
+			</thead>
+			<tbody id='dport_bytes_container'>
+			</tbody>
+		</table>
+
+		<table class='small' id='dport_flows'>
+			<thead>
+				<tr>
+					<td align='center'>Dst Port</td>
+					<td align='center'>Flows</td>
+				</tr>
+			</thead>
+			<tbody id='dport_flows_container'>
 			</tbody>
 		</table>
 

@@ -22,39 +22,46 @@ if __name__ != '__main__':
 def nop (arg):
 	return arg
 
-def snmp_json (data):
-	s = {}
-	for link,information in data.iteritems():
-		s.setdefault(information['ifHCInUcastPkts'] + information['ifInNUcastPkts'],[]).append(link)
+# def snmp_json (data):
+# 	s = {}
+# 	for link,information in data.iteritems():
+# 		s.setdefault(information['ifHCInUcastPkts'] + information['ifInNUcastPkts'],[]).append(link)
 
-	display = sorted(s.keys())
-	display.reverse()
-	r = []
-	for speed in display:
-		links = s[speed]
-		for link in sorted(links):
-			d = {'link':link}
-			information = data[link]
-			for k,v in information.iteritems():
-				d[k] = v
-			r.append(d)
-	return json.dumps(r)
+# 	display = sorted(s.keys())
+# 	display.reverse()
+# 	r = []
+# 	for speed in display:
+# 		links = s[speed]
+# 		for link in sorted(links):
+# 			d = {'link':link}
+# 			information = data[link]
+# 			for k,v in information.iteritems():
+# 				d[k] = v
+# 			r.append(d)
+# 	return json.dumps(r)
 
-def flow_overall (data):
-	r = {}
-	for proto in data:
-		for counter in data[proto]:
-			r["%s_%s" % (proto,counter)] = data[proto][counter]
-	return json.dumps(r)
+# def flow_overall (data):
+# 	r = {}
+# 	for proto in data:
+# 		for counter in data[proto]:
+# 			r["%s_%s" % (proto,counter)] = data[proto][counter]
+# 	return json.dumps(r)
 
 def flow_traffic (data):
 	nb_keeping = 5
 
+	default = {
+		'sipv4' : "127.0.0.1",
+		'dipv4' : "127.0.0.1",
+		'sport' : "0",
+		'dport' : "0",
+	}
+
 	best = {}
 	maximum = {}
-	for direction in ('sipv4','dipv4'):
+	for direction in ('sipv4','dipv4','sport','dport'):
 		for counter in ('bytes','pckts','flows'):
-			best['%s_%s' % (direction,counter)] = {-1:['127.0.0.1']}
+			best['%s_%s' % (direction,counter)] = {-1:[default[direction],]}
 			maximum['%s_%s' % (direction,counter)] = [-1,] * nb_keeping
 
 	for t in data:
@@ -65,23 +72,47 @@ def flow_traffic (data):
 				for key in info:
 					number,minute = key
 					if number >= maximum[index][0]:
-						ip = socket.inet_ntoa(struct.pack("!I", info[key]))
-						best[index].setdefault(number,[]).append(ip)
+						value = socket.inet_ntoa(struct.pack("!I", info[key])) if d in ('sipv4','dipv4') else info[key]
+						best[index].setdefault(number,[]).append(value)
 						maximum[index] = sorted(maximum[index][1:]+[number,])
 
+	# from pprint import pprint
+	# print
+	# pprint(best)
+	# print
+
 	r = {}
-	for direction in ('sipv4','dipv4'):
+	for direction in ('sipv4','dipv4','sport','dport'):
 		r[direction] = {}
 		for counter in ('bytes','pckts','flows'):
-			l = []
 			index = '%s_%s' % (direction,counter)
+			v = {}
+
 			for number in reversed(maximum[index]):
-				for ip in set(best[index][number]):
-					l.append({'ip': ip, 'value': number})
+				for key in set(best[index][number]):
+					v[key] = v.get(key,0) + number
+
+			l = []
+			for key,value in v.iteritems():
+				if value > 0:
+					l.append({'key': key, 'value': str(value)})
+
+			# XXX: This is really some code to fix the HTML
+			for _ in range(max(0,nb_keeping - len(l))):
+				l.append({'key': '&nbsp;', 'value' : '&nbsp;'})
+
 			r[direction][counter] = l[:nb_keeping]
 
 	return json.dumps(r)
 
+def json_index (data):
+	return """
+<html>
+	<head></head>
+		%s
+	<body></body>
+</html>
+""" % '</br>\n'.join(['<a href="%s" target="%s">%s</a>' % (path,path,path) for path in data])
 
 class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 	# webroot is added to this class
@@ -98,7 +129,7 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 	def __init__ (self,*args,**kargs):
 		self._json = {
-			"/json/"                                 : ( 'text/json', json.dumps,     self.json_list,    () ),
+			"/json/"                                 : ( 'text/html', json_index,      self.json_list,    () ),
 			"/json/snmp/interfaces.json"             : ( 'text/json', json.dumps,     self.snmp.data,    () ),
 			"/json/flow/overview.json"               : ( 'text/json', json.dumps,     self.flow.overall, () ),
 			"/json/flow/traffic.json"                : ( 'text/json', flow_traffic,   self.flow.traffic, () ),
