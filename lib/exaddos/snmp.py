@@ -63,6 +63,7 @@ class _SNMPFactory (object):
 	def _get (self,key):
 		from pysnmp.entity.rfc3413.oneliner import cmdgen
 		from pysnmp.error import PySnmpError
+		from pysnmp.proto.rfc1905 import NoSuchInstance
 
 		try:
 			if self.interface.snmp_version == 2:
@@ -73,7 +74,6 @@ class _SNMPFactory (object):
 				)
 			elif self.interface.snmp_version == 3:
 				from pysnmp.entity import config
-				from pysnmp.proto.rfc1905 import NoSuchInstance
 
 				mapping_auth = {
 					'MD5' : config.usmHMACMD5AuthProtocol,
