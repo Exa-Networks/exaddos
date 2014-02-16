@@ -77,6 +77,20 @@ class value (object):
 		return _
 
 	@staticmethod
+	def snmpauth (_):
+		auth = value.unquote(_).upper()
+		if auth not in ('','MD5','SHA','DES'):
+			raise TypeError('SNMP authentication method unknown %s (expect MD5,SHA,DES)')
+		return auth
+
+	@staticmethod
+	def snmppriv (_):
+		priv = value.unquote(_).upper()
+		if priv not in ('','DES','3DES','AES-128','AES-192','AES-256'):
+			raise TypeError('SNMP authentication method unknown %s (expect 3DES,AES-128,AES-192,AES-256)')
+		return priv
+
+	@staticmethod
 	def folder(path):
 		path = os.path.expanduser(value.unquote(path))
 		paths = [
@@ -180,6 +194,11 @@ defaults = {
 		'router'               : (value.unquote,value.quote,     '127.0.0.1',      ''),
 		'snmp_version'         : (value.integer,value.nop,       '2',              'only version 2 supported'),
 		'snmp_password'        : (value.unquote,value.quote,     'public',         'your passwords are secure aren\'t they'),
+		'snmp_user'            : (value.unquote,value.quote,     '',               'snmp v3 user'),
+		'snmp_auth_key'        : (value.unquote,value.quote,     '',               'snmp v3 auth key'),
+		'snmp_auth_method'     : (value.snmpauth,value.quote,    '',               'snmp v3 auth (MD5,SHA,DES, empty string for no auth)'),
+		'snmp_privacy_key'     : (value.unquote,value.quote,     '',               'snmp v3 privacy key'),
+		'snmp_privacy_method'  : (value.snmppriv,value.quote,    '',               'snmp v3 privacy (DES,3DES,AES-128,AES-192,AES-256, empty for no privacy)'),
 		'snmp_frequency'       : (value.frequency,value.nop,     '10',             'snmp pulling frequency (minimum 10 seconds)'),
 		'snmp_index_port'      : (value.integer,value.nop,       '0',              'physical interface SNMP interface index'),
 		'snmp_index_vlan'      : (value.integer,value.nop,       '0',              'vlan/ae/other SNMP interface index (or physical if not defined)'),

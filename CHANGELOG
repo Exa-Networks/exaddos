@@ -1,6 +1,8 @@
 Version 0.2.0
  * Src/Dst port top talkers
  * better / less json calls
+ * SNMPv3 support
+   requested by: Ryan Steinmetz
 
 Version 0.1.0
 	* Initial release

@@ -1,0 +1,34 @@
+[exaddos.daemon]
+user = 'nobody'
+
+[exaddos.http]
+host = '127.0.0.1'
+#host = '192.0.2.201'
+port = 8080
+
+[exaddos.ipfix]
+host = '127.0.0.1'
+port = 29300
+
+[exaddos.location]
+#database = 'data/exaddos/db/exaddos.sqlite3'
+html = 'data/exaddos/html'
+
+[exaddos.profile]
+destination = 'stdout'
+enable = false
+
+[exaddos.router]
+router = '192.0.2.123'
+snmp_version = 3
+snmp_user = 'exaddos'
+snmp_auth_method = 'SHA'
+snmp_auth_key = 'pass7faYDFagREF6DasdG'
+snmp_privacy_method = 'AES-128'
+snmp_privacy_key = 'privTasvRT3gfg4GFsGHV'
+snmp_frequency = 10
+snmp_index_port = 520
+snmp_index_vlan = 573
+threshold_bandwidth = 524288000
+threshold_unicast = 120000
+threshold_notunicast = 1500

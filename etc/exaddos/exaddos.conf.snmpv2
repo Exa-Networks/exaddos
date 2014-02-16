@@ -22,11 +22,9 @@ enable = false
 
 [exaddos.PEER1]
 router = '127.0.0.2'
-location = 'datacenter'
 snmp_version = 2
 snmp_password = 'secret'
 snmp_frequency = 10
-interface_name =  'ge-0/0/1'
 snmp_index_port = 120
 snmp_index_vlan = 100
 threshold_bandwidth = 104857600
@@ -36,11 +34,9 @@ threshold_notunicast = 1500
 
 [exaddos.PEER2]
 router = '127.0.0.2'
-location = 'datacenter'
 snmp_version = 2
 snmp_password = 'secret'
 snmp_frequency = 10
-interface_name =  'ge-0/0/1'
 snmp_index_port = 120
 snmp_index_vlan = 110
 threshold_bandwidth = 104857600
@@ -54,7 +50,6 @@ location = 'datacenter'
 snmp_version = 2
 snmp_password = 'secret'
 snmp_frequency = 10
-interface_name =  'ge-0/1/2'
 snmp_index_port = 220
 snmp_index_vlan = 140
 threshold_bandwidth = 104857600

@@ -13,6 +13,8 @@ import random
 from .thread import Thread
 from .warning import unicast,notunicast,bw
 
+# group the OID to request
+# http://pysnmp.sourceforge.net/docs/current/apps/sync-command-generator.html
 
 class _SNMPFactory (object):
 	initialised = False
@@ -69,6 +71,39 @@ class _SNMPFactory (object):
 					cmdgen.UdpTransportTarget((self.interface.router, 161)),
 					self.collection[key]
 				)
+			elif self.interface.snmp_version == 3:
+				from pysnmp.entity import config
+				from pysnmp.proto.rfc1905 import NoSuchInstance
+
+				mapping_auth = {
+					'MD5' : config.usmHMACMD5AuthProtocol,
+					'SHA' : config.usmHMACSHAAuthProtocol,
+					''    : config.usmNoAuthProtocol,
+				}
+
+				mapping_privacy = {
+					'DES'     : config.usmDESPrivProtocol,
+					'3DES'    : config.usm3DESEDEPrivProtocol,
+					'AES-128' : config.usmAesCfb128Protocol,
+					'AES-192' : config.usmAesCfb192Protocol,
+					'AES-256' : config.usmAesCfb256Protocol,
+					''        : config.usmNoPrivProtocol,
+				}
+
+				user = cmdgen.UsmUserData(
+						self.interface.snmp_user,
+						self.interface.snmp_auth_key,
+						self.interface.snmp_privacy_key,
+						authProtocol=mapping_auth[self.interface.snmp_auth_method],
+						privProtocol=mapping_privacy[self.interface.snmp_privacy_method])
+
+				transport = cmdgen.UdpTransportTarget((self.interface.router, 161))
+
+				errorIndication, errorStatus, errorIndex, varBinds = cmdgen.CommandGenerator().getCmd(
+					user, transport,
+					self.collection[key]
+				)
+#					cmdgen.MibVariable('.'.join(str(_) for _ in self.collection[key]))
 			else:
 				raise NotImplemented('Feel free to add support for this SNMP version and send us the patch - thanks')
 		except PySnmpError:
@@ -77,9 +112,15 @@ class _SNMPFactory (object):
 			return None
 
 		if (errorIndication,errorStatus,errorIndex) == (None,0,0):
+			result = varBinds[0][1]
+
+			if isinstance(result,NoSuchInstance):
+				print >> sys.stderr, 'SNMP: %s did not have %s' % (self.name,key)
+				sys.stderr.flush()
+				return None
+
 			try:
 				return varBinds[0][1]
-			# The data was of type NoSuchInstance
 			except AttributeError:
 				print >> sys.stderr, 'SNMP: %s did not have %s' % (self.name,key)
 				sys.stderr.flush()
