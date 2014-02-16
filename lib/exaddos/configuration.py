@@ -191,7 +191,7 @@ defaults = {
 	},
 
 	'[A-Z]*' : {
-		'router'               : (value.unquote,value.quote,     '127.0.0.1',      ''),
+		'router'               : (value.unquote,value.quote,     '127.0.0.1',      'the IP of the router to snmp poll (NO HOSTNAME)'),
 		'snmp_version'         : (value.integer,value.nop,       '2',              'only version 2 supported'),
 		'snmp_password'        : (value.unquote,value.quote,     'public',         'your passwords are secure aren\'t they'),
 		'snmp_user'            : (value.unquote,value.quote,     '',               'snmp v3 user'),
@@ -314,7 +314,7 @@ def default ():
 		for option in sorted(defaults[section]):
 			values = defaults[section][option]
 			default = "'%s'" % values[2] if values[1] in (value.list,value.path,value.quote,value.syslog) else values[2]
-			yield 'exaddos.%s.%s %s: %s. default (%s)' % (section,option,' '*(20-len(section)-len(option)),values[3],default)
+			yield 'exaddos.%s.%s %s: %s. default (%s)' % (section,option,' '*(27-len(section)-len(option)),values[3],default)
 
 def ini (diff=False):
 	for section in sorted(__configuration):
