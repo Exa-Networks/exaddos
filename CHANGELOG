@@ -1,3 +1,7 @@
+Version 0.3.0
+ * Per IP monitoring page
+ * More rendering in JS
+
 Version 0.2.0
  * Src/Dst port top talkers
  * better / less json calls

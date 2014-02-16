@@ -13,7 +13,6 @@ import SimpleHTTPServer
 import SocketServer
 import json
 import socket
-import struct
 
 # ugly but practical for testing ..
 if __name__ != '__main__':
@@ -47,6 +46,7 @@ def nop (arg):
 # 			r["%s_%s" % (proto,counter)] = data[proto][counter]
 # 	return json.dumps(r)
 
+
 def flow_traffic (data):
 	nb_keeping = 5
 
@@ -72,8 +72,7 @@ def flow_traffic (data):
 				for key in info:
 					number,minute = key
 					if number >= maximum[index][0]:
-						value = socket.inet_ntoa(struct.pack("!I", info[key])) if d in ('sipv4','dipv4') else info[key]
-						best[index].setdefault(number,[]).append(value)
+						best[index].setdefault(number,[]).append(info[key])
 						maximum[index] = sorted(maximum[index][1:]+[number,])
 
 	# from pprint import pprint
@@ -99,7 +98,7 @@ def flow_traffic (data):
 
 			# XXX: This is really some code to fix the HTML
 			for _ in range(max(0,nb_keeping - len(l))):
-				l.append({'key': '&nbsp;', 'value' : '&nbsp;'})
+				l.append({'key': '', 'value' : ''})
 
 			r[direction][counter] = l[:nb_keeping]
 
@@ -129,10 +128,11 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 	def __init__ (self,*args,**kargs):
 		self._json = {
-			"/json/"                                 : ( 'text/html', json_index,      self.json_list,    () ),
-			"/json/snmp/interfaces.json"             : ( 'text/json', json.dumps,     self.snmp.data,    () ),
-			"/json/flow/overview.json"               : ( 'text/json', json.dumps,     self.flow.overall, () ),
-			"/json/flow/talkers.json"                : ( 'text/json', flow_traffic,   self.flow.traffic, () ),
+			"/json.html"                         : ( 'text/html', json_index,     self.json_list,         () ),
+			"/json/"                             : ( 'text/html', json_index,     self.json_list,         () ),
+			"/json/snmp/interfaces.json"         : ( 'text/json', json.dumps,     self.snmp.data,         () ),
+			"/json/flow/overview.json"           : ( 'text/json', json.dumps,     self.flow.overall,      () ),
+			"/json/flow/talkers.json"            : ( 'text/json', flow_traffic,   self.flow.traffic,      () ),
 		}
 		try:
 			SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self,*args,**kargs)
@@ -149,9 +149,6 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 	def log_message (*args):
 		pass
 
-	def do_POST (self):
-		return
-
 	def valid_path (self,path):
 		for letter in path:
 			if letter.isalnum():
@@ -162,13 +159,18 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 		return '..' not in path
 
+	def do_HEAD(self):
+		self.send_response(200)
+		self.send_header('Content-type', 'text/html')
+		self.end_headers()
+		return
+
 	def do_GET (self):
 		content = ''
 		fname = ''
 
 		# Parse query data to find out what was requested
 		parsedParams = urlparse.urlparse(self.path)
-
 		path = parsedParams.path
 
 		if path.startswith('/json/'):
@@ -234,6 +236,34 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 		self.wfile.write(content)
 
 		return
+
+	def do_POST (self):
+		# Parse query data to find out what was requested
+		parsedParams = urlparse.urlparse(self.path)
+		path = parsedParams.path
+
+		if path == '/post/monitor/ip':
+			import cgi
+			form = cgi.FieldStorage(
+				fp=self.rfile,
+				headers=self.headers,
+				environ={'REQUEST_METHOD':'POST',
+				'CONTENT_TYPE':self.headers['Content-Type'],
+			})
+
+			ip = form.getfirst('ip','')
+			number = long(ip) if ip and ip.isdigit() else 0
+
+			if number and number < (224 << 24) - 1:  # last unicast IP
+				self.flow.monitor(number)
+				self.send_response(200)
+				self.send_header('Content-type','text/json')
+				self.end_headers()
+				self.wfile.write(json.dumps(self.flow.monitor_data(number)))
+				return
+
+		self.send_response(404)
+		self.end_headers()
 
 
 class _HTTPServerFactory (object):

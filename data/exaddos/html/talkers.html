@@ -54,6 +54,9 @@
 				text-align: right;
 			}
 
+			table.small tbody tr:hover td {
+				background-color: #d0ef00;
+			}
 
 			h2 {
 				font-size: 15px;
@@ -122,6 +125,17 @@
 		<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
 
 		<script type="text/javascript">
+				function toIP (number) {
+					var ip=number%256;
+
+					for (var i=1;i<=3;i++)
+					{
+						number=Math.floor(number/256);
+						ip=number%256+'.'+ip;
+					}
+					return ip; // As string
+				}
+
 				function draw_error (message) {
 					$("#error").html("<span class='error-true'>"+message+"</span>");
 				}
@@ -137,6 +151,27 @@
 						success: function (response) {
 							var destination = ["sipv4","dipv4","sport","dport"];
 							var counter = ["pckts","bytes","flows"];
+
+							formated = Array();
+
+							for (var d in destination) {
+								for (var c in counter) {
+									for (var record in response[destination[d]][counter[c]]) {
+										value = response[destination[d]][counter[c]][record]['key'];
+										if (value == '') {
+											response[destination[d]][counter[c]][record]['key'] = '&nbsp;';
+											response[destination[d]][counter[c]][record]['click'] = '';
+										}
+										else if (['sipv4','dipv4'].indexOf(destination[d]) != -1) {
+											response[destination[d]][counter[c]][record]['key'] = toIP(value);
+											response[destination[d]][counter[c]][record]['click'] = "window.open('/talker.html#"+value+"')";
+										}
+										else {
+											response[destination[d]][counter[c]][record]['click'] = '';
+										}
+									}
+								}
+							}
 
 							for (var d in destination) {
 								for (var c in counter) {
@@ -163,6 +198,28 @@
 				$("#error").empty();
 			}, 3000);
 
+			// function postOnClick(ip)
+			// {
+			// 	var http = new XMLHttpRequest();
+
+			// 	var dot = ip.split('.');
+			// 	decimal = ((((((+dot[0])*256)+(+dot[1]))*256)+(+dot[2]))*256)+(+dot[3]);
+
+			// 	var params = "ip=" + ip;
+
+			// 	http.open("POST", "/post/monitor/ip", true);
+
+			// 	http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+			// 	http.onreadystatechange = function() {
+			// 		if (http.readyState == 4 && http.status == 200) {
+			// 			console.log(http.responseText);
+			// 			window.open(http.responseText);
+			// 		}
+			// 	}
+
+			// 	http.send(params);
+			// }
 		</script>
 
 		<script id="snmp_error" type="text/x-jquery-tmpl">
@@ -172,9 +229,9 @@
 		</script>
 
 		<script id="talker_template" type="text/x-jquery-tmpl">
-			<tr onclick="window.open('/view/${key}.html')">
-				<td align='left'>${key}</td>
-				<td align='right'>${value}</td>
+			<tr onclick="${click}">
+				<td>${key}</td>
+				<td>${value}</td>
 			</tr>
 		</script>
 

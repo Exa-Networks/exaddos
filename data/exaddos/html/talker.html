@@ -1,0 +1,236 @@
+<html>
+	<head>
+		<style type="text/css">
+			h1 {
+				font-size: 15px;
+			}
+
+			.warning-true {
+				background-color: #FF2070;
+			}
+
+			.warning-false {
+			}
+
+			#error {
+				display: inline-block;
+				text-align: center;
+				width: 100%;
+			}
+
+			.error-true {
+				color: #901030;
+			}
+
+			table.protocol {
+				padding: 0px
+				border: 1px solid black;
+				font-size: 12px;
+				float:left;
+			}
+
+			table.protocol thead tr td {
+				border-bottom: 1px solid black;
+				padding: 0px
+			}
+
+			table.protocol thead tr td{
+				background: #C6C6E6;
+				padding: 5px;
+				min-width: 108px;
+			}
+
+			table.protocol tbody tr:nth-child(even) td{
+				background: #E6E6E6;
+			}
+
+			table.protocol tbody tr td:nth-child(1) {
+				padding-left: 10px;
+				text-align: left;
+			}
+
+			table.protocol tbody tr td:nth-child(2) {
+				padding-right: 10px;
+				text-align: right;
+			}
+
+			table.protocol tbody tr:hover td {
+				background-color: #d0ef00;
+			}
+
+			h2 {
+				font-size: 15px;
+			}
+
+			.logo {
+			  display: block;
+			  float: left;
+			  width: 50px;
+			  margin-left: 0.6em;
+			  margin-bottom: 0.5em;
+			  margin-top: -0.7em;
+			  padding-top: 6px;
+			}
+		</style>
+
+		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
+		<script type="text/javascript" src="/inc/jquery.tmpl.min.js"></script>
+		<!-- <script type="text/javascript" src="/inc/stupidtable.js"></script> -->
+		<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
+
+		<script type="text/javascript">
+				function toIP (number) {
+					var ip=number%256;
+
+					for (var i=1;i<=3;i++)
+					{
+						number=Math.floor(number/256);
+						ip=number%256+'.'+ip;
+					}
+					return ip; // As string
+				}
+
+				if (window.top.location.hash.indexOf('#') != -1) {
+					var ipn = parseInt(window.top.location.hash.substring(1));
+					if (ipn == 'NaN') {
+						ipn = 0;
+					}
+				} else {
+					var ipn = 0;
+				}
+
+				function draw_error (message) {
+					$("#error").html("<span class='error-true'>"+message+"</span>");
+				}
+
+				// console.log(response);
+				// Only if the data is not returned as 'text/json' otherwise the browser does it for us
+				// draw_table(jQuery.parseJSON(response));
+
+				function fetch_talkers(json_address,ipn){
+					$.ajax({
+						type: "POST",
+						data: "ip="+ipn,
+						url: json_address,
+						success: function (response) {
+
+							protocol_array = [
+								{'protocol':1,  'name':'ICMP'},
+								{'protocol':17, 'name':'UDP'},
+								{'protocol':6,  'name':'TCP'}
+							];
+
+							for (var protocol in response) {
+								if (protocol_array.indexOf(protocol) != -1) {
+									content = new Array();
+									content['protocol'] = protocols[protocol];
+									content['name'] = 'PROTOCOL '+ protocols[protocol].toString();
+									protocol_array.push(content);
+								}
+							}
+
+							$("#root_container").empty();
+							$("#protocol_template").tmpl(protocol_array).appendTo("#root_container");
+
+
+							for (var protocol in response) {
+								flow_array = new Array();
+								for (var flow in response[protocol]) {
+									var flow_parts = flow.split(' ');
+									var length = flow_parts.length;
+									var flow_data = Array()
+									var data = response[protocol][flow];
+									if (length == 4) {
+										flow_data['sipv4'] = toIP(flow_parts[0]);
+										flow_data['sport'] = flow_parts[1];
+										flow_data['dipv4'] = toIP(flow_parts[2]);
+										flow_data['dport'] = flow_parts[3];
+									} else if (length == 2) {
+										flow_data['sipv4'] = toIP(flow_parts[0]);
+										flow_data['sport'] = ' ';
+										flow_data['dipv4'] = toIP(flow_parts[1]);
+										flow_data['dport'] = ' ';
+									}
+									flow_data['pckts'] = data['pckts'];
+									flow_data['bytes'] = data['bytes'];
+									flow_data['flows'] = data['flows'];
+
+									flow_array.push(flow_data);
+								}
+								$("#flow_template").tmpl(flow_array).appendTo("#protocol_"+protocol+"_container");
+							}
+
+						$("table").stupidtable();
+
+						},
+						error: function (XMLHttpRequest, textStatus, errorThrown) {
+							draw_error('we lost our connection to our snmp data source');
+						}
+					});
+				}
+
+			$(document).ready(function() {
+				fetch_talkers('/post/monitor/ip',ipn);
+			});
+
+			window.setInterval(function(){
+				fetch_talkers('/post/monitor/ip',ipn);
+			}, 1000);
+
+			window.setInterval(function(){
+				$("#error").empty();
+			}, 3000);
+
+		</script>
+
+		<script id="taker_error" type="text/x-jquery-tmpl">
+			<tr>
+				<td colspan="8">connection to server lost</td>
+			</tr>
+		</script>
+
+		<script id="protocol_template" type="text/x-jquery-tmpl">
+			<h2>${name}</h2>
+			<table class='protocol' id='protocol_${protocol}'>
+				<thead>
+					<tr>
+						<td>Source IP</td>
+						<td>Source Port</td>
+						<td>Destination IP</td>
+						<td>Destination Port</td>
+						<td>Packets</td>
+						<td>Bytes</td>
+						<td>Flows</td>
+					</tr>
+				</thead>
+				<tbody id='protocol_${protocol}_container'>
+				</tbody>
+			</table>
+			<br style='clear:both' />
+		</script>
+
+		<script id="flow_template" type="text/x-jquery-tmpl">
+			<tr>
+				<td>${sipv4}</td>
+				<td data-sort="int">${dport}</td>
+				<td>${dipv4}</td>
+				<td data-sort="int">${dport}</td>
+				<td data-sort="int">${bytes}</td>
+				<td data-sort="int">${pckts}</td>
+				<td data-sort="int">${flows}</td>
+			</tr>
+		</script>
+
+	</head>
+
+	<body>
+		<a href="/">
+			<img class="logo" src="/exa.jpg" />
+		</a>
+
+		<div id='error'></div>
+
+		<div id='root_container'></div>
+
+	</body>
+</html>
