@@ -1,4 +1,4 @@
 log better the different thread issues so they can be reported in the interface
-add favicon.ico
 return all value as number via JSON and format it in the page
 move the inserting in container in its own thread to not miss on UDP packets
+reduce the time the lock is taken for the flow container
