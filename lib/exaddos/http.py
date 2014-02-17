@@ -269,10 +269,10 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 class _HTTPServerFactory (object):
 	use_thread = True
 
-	def __init__ (self,host,port,queue):
+	def __init__ (self,host,port,raising):
 		print 'http server on %s:%d' % (host,port)
 		self.httpd = None
-		self.queue = queue
+		self.raising = raising
 
 		self.host = host
 		self.port = port
@@ -285,7 +285,7 @@ class _HTTPServerFactory (object):
 	def start (self):
 		print "starting http server"
 		if self.use_thread:
-			self.httpd = Thread(self.serve,self.queue)
+			self.httpd = Thread(self.serve,self.raising)
 			self.httpd.daemon = True
 			self.httpd.start()
 		else:
@@ -305,10 +305,10 @@ class HTTPServer (object):
 		HTTPHandler.snmp = snmp
 		HTTPHandler.flow = flow
 
-	def add (self,host,port,queue):
+	def add (self,host,port,raising):
 		key = '%s:%d' % (host,port)
 		if key not in self.servers:
-			server = _HTTPServerFactory(host,port,queue)
+			server = _HTTPServerFactory(host,port,raising)
 			server.parent = self
 			self.servers[key] = server
 

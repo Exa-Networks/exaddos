@@ -11,15 +11,16 @@ import socket
 
 from .thread import Thread
 from .ipfix import IPFIX
+from .q import Queue
 
 
 class _FlowServerFactory (object):
 	use_thread = True
 
-	def __init__ (self,host,port,container,queue):
+	def __init__ (self,host,port,container,raising):
 		print 'ipfix server on %s:%d' % (host,port)
 		self.flowd = None
-		self.queue = queue
+		self.raising = raising
 
 		self.host = host
 		self.port = port
@@ -53,7 +54,7 @@ class _FlowServerFactory (object):
 	def start (self):
 		print "starting ipfix server"
 		if self.use_thread:
-			self.flowd = Thread(self.serve,self.queue)
+			self.flowd = Thread(self.serve,self.raising)
 			self.flowd.daemon = True
 			self.flowd.start()
 		else:
@@ -74,11 +75,12 @@ class FlowServer (object):
 		# This will be shared among all instrance
 		self.configuration = configuration
 		self.container = container
+		self.q = Queue()
 
-	def add (self,host,port,queue):
+	def add (self,host,port,raising):
 		key = '%s:%d' % (host,port)
 		if key not in self.servers:
-			server = _FlowServerFactory(host,port,self.container,queue)
+			server = _FlowServerFactory(host,port,self.container,raising)
 			server.parent = self
 			self.servers[key] = server
 

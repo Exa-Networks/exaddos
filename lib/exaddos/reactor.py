@@ -7,15 +7,15 @@ Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
 import sys
-import Queue
 
+from .q import Queue,Empty
 from .http import HTTPServer
 from .snmp import SNMPClient
 from .flow import FlowServer
 from .container import ContainerSNMP,ContainerFlow
 
 # XXX: Look at ExaProxy Queue implementation
-_queue = Queue.Queue()
+_raising = Queue()
 _snmp_container = ContainerSNMP()
 _flow_container = ContainerFlow()
 
@@ -31,17 +31,17 @@ def setup (configuration):
 	ip = configuration.http.host
 	port = configuration.http.port
 	_http = HTTPServer(configuration,_snmp_container,_flow_container)
-	_http.add(ip,port,_queue)
+	_http.add(ip,port,_raising)
 
 	_snmp = SNMPClient(_snmp_container)
 	interfaces = [_ for _ in configuration.keys() if _.isupper()]
 	for interface in interfaces:
-		_snmp.add(interface,configuration[interface],_queue)
+		_snmp.add(interface,configuration[interface],_raising)
 
 	ip = configuration.ipfix.host
 	port = configuration.ipfix.port
 	_flow = FlowServer(configuration,_flow_container)
-	_flow.add(ip,port,_queue)
+	_flow.add(ip,port,_raising)
 
 
 def run ():
@@ -59,8 +59,8 @@ def run ():
 
 	while True:
 		try:
-			exception = _queue.get(block=False)
-		except Queue.Empty:
+			exception = _raising.get()
+		except Empty:
 			pass
 		except KeyboardInterrupt:
 			break

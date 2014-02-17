@@ -35,30 +35,12 @@ class _SNMPFactory (object):
 		'ifInDiscards'    : 'pkts',
 		}
 
-	def __init__ (self,name,interface,container,queue):
+	def __init__ (self,name,interface,container,raising):
 		self.name = name
 		self.interface = interface
 		self.container = container
-		self.queue = queue
-
-		from pysnmp.smi import builder
-
-		mibBuilder = builder.MibBuilder().loadModules('SNMPv2-MIB', 'IF-MIB')
-
-		self.collection = {
-			'ifHCInOctets'    : mibBuilder.importSymbols('IF-MIB', 'ifHCInOctets')[0].getName() + (self.interface.snmp_index_vlan,),
-			'ifHCInUcastPkts' : mibBuilder.importSymbols('IF-MIB', 'ifHCInUcastPkts')[0].getName() + (self.interface.snmp_index_vlan,),
-			'ifInNUcastPkts'  : mibBuilder.importSymbols('IF-MIB', 'ifInNUcastPkts')[0].getName() + (self.interface.snmp_index_port,),
-			'ifInErrors'      : mibBuilder.importSymbols('IF-MIB', 'ifInErrors')[0].getName() + (self.interface.snmp_index_port,),
-			'ifInDiscards'    : mibBuilder.importSymbols('IF-MIB', 'ifInDiscards')[0].getName() + (self.interface.snmp_index_port,),
-			'sysDescr'        : mibBuilder.importSymbols('SNMPv2-MIB', 'sysDescr')[0].getName() + (0,),
-		}
-
-		try:
-			self.description = str(self._get('sysDescr') or '-')
-			self.running = True
-		except KeyboardInterrupt:
-			self.running = False
+		self.raising = raising
+		self.running = None
 
 	def _get (self,key):
 		from pysnmp.entity.rfc3413.oneliner import cmdgen
@@ -133,6 +115,8 @@ class _SNMPFactory (object):
 	def collect (self):
 		result = {}
 
+		raise Exception('')
+
 		for key in self.correction:
 			value = self._get(key)
 			if value is not None:
@@ -143,6 +127,31 @@ class _SNMPFactory (object):
 		return result
 
 	def serve (self):
+		if self.running is None:
+			return self._init()
+		return self._serve()
+
+	def _init (self):
+		from pysnmp.smi import builder
+
+		mibBuilder = builder.MibBuilder().loadModules('SNMPv2-MIB', 'IF-MIB')
+
+		self.collection = {
+			'ifHCInOctets'    : mibBuilder.importSymbols('IF-MIB', 'ifHCInOctets')[0].getName() + (self.interface.snmp_index_vlan,),
+			'ifHCInUcastPkts' : mibBuilder.importSymbols('IF-MIB', 'ifHCInUcastPkts')[0].getName() + (self.interface.snmp_index_vlan,),
+			'ifInNUcastPkts'  : mibBuilder.importSymbols('IF-MIB', 'ifInNUcastPkts')[0].getName() + (self.interface.snmp_index_port,),
+			'ifInErrors'      : mibBuilder.importSymbols('IF-MIB', 'ifInErrors')[0].getName() + (self.interface.snmp_index_port,),
+			'ifInDiscards'    : mibBuilder.importSymbols('IF-MIB', 'ifInDiscards')[0].getName() + (self.interface.snmp_index_port,),
+			'sysDescr'        : mibBuilder.importSymbols('SNMPv2-MIB', 'sysDescr')[0].getName() + (0,),
+		}
+
+		try:
+			self.description = str(self._get('sysDescr') or '-')
+			self.running = True
+		except KeyboardInterrupt:
+			self.running = False
+
+	def _serve (self):
 		last = self.collect()
 
 		values = dict(zip(last.keys(),[0] * len(last.keys())))
@@ -190,7 +199,8 @@ class _SNMPFactory (object):
 
 	def start (self):
 		print "starting snmp clients"
-		self.snmp = Thread(self.serve,self.queue)
+		sys.stdout.flush()
+		self.snmp = Thread(self.serve,self.raising)
 		self.snmp.daemon = True
 		self.snmp.start()
 
@@ -206,11 +216,11 @@ class SNMPClient (object):
 		# This will be shared among all instrance
 		self.container = container
 
-	def add (self,name,interface,queue):
+	def add (self,name,interface,raising):
 		host = interface.router
 		key = '%s:%d' % (host,self.counter)
 		self.counter += 1
-		client = _SNMPFactory(name,interface,self.container,queue)
+		client = _SNMPFactory(name,interface,self.container,raising)
 		client.parent = self
 		self.clients[key] = client
 
