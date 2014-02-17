@@ -75,8 +75,7 @@
 
 		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
 		<script type="text/javascript" src="/inc/jquery.tmpl.min.js"></script>
-		<!-- <script type="text/javascript" src="/inc/stupidtable.js"></script> -->
-		<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
+		<!-- <script type="text/javascript" src="/inc/jquery.tablesorter.pager.js"></script> -->
 
 		<script type="text/javascript">
 				function toIP (number) {
@@ -132,6 +131,11 @@
 							$("#root_container").empty();
 							$("#protocol_template").tmpl(protocol_array).appendTo("#root_container");
 
+							// console.log($("table"));
+							// $("table").tablesorter();
+							// $("#protocol_6").__proto__.tablesorter();
+							// $("#protocol_6").trigger("update");
+							// $("#protocol_6").trigger("appendCache");
 
 							for (var protocol in response) {
 								flow_array = new Array();
@@ -160,7 +164,19 @@
 								$("#flow_template").tmpl(flow_array).appendTo("#protocol_"+protocol+"_container");
 							}
 
-						$("table").stupidtable();
+							// $("#protocol_6").tablesorter();
+							// $("#protocol_6").trigger('update');
+							// $("#protocol_6").tablesorter();
+
+
+							// $("#protocol_tcp").tablesorter();
+							// $("#protocol_tcp").trigger('update');
+							// $("#protocol_tcp").tablesorter();
+
+
+							// $('table').tablesorter();
+							// $('table').trigger('update');
+							// $('table').tablesorter();
 
 						},
 						error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -212,12 +228,12 @@
 		<script id="flow_template" type="text/x-jquery-tmpl">
 			<tr>
 				<td>${sipv4}</td>
-				<td data-sort="int">${dport}</td>
+				<td>${dport}</td>
 				<td>${dipv4}</td>
-				<td data-sort="int">${dport}</td>
-				<td data-sort="int">${bytes}</td>
-				<td data-sort="int">${pckts}</td>
-				<td data-sort="int">${flows}</td>
+				<td>${dport}</td>
+				<td>${bytes}</td>
+				<td>${pckts}</td>
+				<td>${flows}</td>
 			</tr>
 		</script>
 

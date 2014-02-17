@@ -39,6 +39,7 @@ class ContainerSNMP (object):
 
 class ContainerFlow (object):
 	retain = 60
+	#retain = 3600  # XXX: for debugging
 
 	def __init__ (self,max_speakers=5):
 		self._traffic_lock = Lock()
