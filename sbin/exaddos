@@ -25,6 +25,7 @@ then
 fi
 
 #PYPY=`which pypy`
+#PYTHON3=`which python3`
 PYTHON27=`which python2.7`
 PYTHON26=`which python2.6`
 PYTHON25=`which python2.5`
@@ -36,6 +37,9 @@ PYTHON=`which python`
 #then
 #	INTERPRETER=$PYPY
 #elif [ -f "$PYTHON27" ]
+#if [ -f "$PYTHON3" ]
+#then
+#	INTERPRETER=$PYTHON3
 if [ -f "$PYTHON27" ]
 then
 	INTERPRETER=$PYTHON27

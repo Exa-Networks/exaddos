@@ -1,7 +1,11 @@
+Version 0.4.0
+ * Save PID
+
 Version 0.3.0
  * Per IP monitoring page
  * More rendering in JS
  * Moving flow parsing to multiple threads
+ * Support for daemonize, better logging
 
 Version 0.2.0
  * Src/Dst port top talkers

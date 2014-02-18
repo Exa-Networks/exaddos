@@ -12,6 +12,8 @@ import pwd
 import socket
 import errno
 
+import atexit
+
 from .log import log,err,silence
 from exaddos import reactor
 
@@ -135,6 +137,47 @@ def daemonise (daemonize):
 	fork_exit()
 	mute()
 	silence()
+
+def savepid (location):
+	if not location:
+		return
+
+	ownid = os.getpid()
+
+	flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+	mode = ((os.R_OK | os.W_OK) << 6) | (os.R_OK << 3) | os.R_OK
+
+	try:
+		fd = os.open(location,flags,mode)
+	except OSError:
+		err("PIDfile already exists, not updated %s" % location)
+		return False
+
+	try:
+		f = os.fdopen(fd,'w')
+		line = "%d\n" % ownid
+		f.write(line)
+		f.close()
+	except IOError:
+		err("Can not create PIDfile %s" % location)
+		return False
+	log("Created PIDfile %s with value %d" % (location,ownid))
+	atexit.register(removepid,location)
+	return True
+
+def removepid (location):
+	if not location:
+		return
+
+	try:
+		os.remove(location)
+	except OSError, e:
+		if e.errno == errno.ENOENT:
+			pass
+		else:
+			err("Can not remove PIDfile %s" % location)
+			return
+	log("Removed PIDfile %s" % location)
 
 
 def help ():
@@ -260,6 +303,8 @@ if __name__ == '__main__':
 		__exit(configuration.debug.memory,0)
 
 	daemonise(configuration.daemon.daemonize)
+
+	savepid(configuration.daemon.pidfile)
 
 	if not configuration.profile.enable:
 		try:

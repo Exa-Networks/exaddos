@@ -20,13 +20,13 @@ __lock = Lock()
 def log (string):
 	if __loud['stdout']:
 		with __lock:
-			print string
+			sys.stdout.write('%s\n' % string)
 			sys.stdout.flush()
 
 def err (string):
 	if __loud['stderr']:
 		with __lock:
-			print >> sys.stderr, string
+			sys.stderr.write('%s\n' % string)
 			sys.stderr.flush()
 
 def silence ():
