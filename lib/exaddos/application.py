@@ -14,7 +14,7 @@ import errno
 
 import atexit
 
-from .log import log,err,silence
+from log import log,err,silence
 from exaddos import reactor
 
 def __exit(memory,code):
