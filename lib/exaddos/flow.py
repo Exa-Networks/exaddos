@@ -83,8 +83,23 @@ class _FlowServerFactory (object):
 		self.running = True
 
 	def serve (self):
+		# The best a 10 Mb interface can do is 14,880 frames per second
+		# each frame being only 84 bytes
+		# On 127.0.0.1, my Mac can receive around 10/12k frames ..
+		# So it would seems the MAC loopback is bad for high perf networking ...
 		try:
 			sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+			current = sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)  # value of 196724 on my mac
+			new = current
+			while True:
+				try:
+					new += current
+					sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, new)
+				except socket.error:
+					print "ipfix changed SO_RCVBUF from %d to %d" % (current,new-current)
+					sys.stdout.flush()
+					break
+
 			sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			sock.bind((self.host,self.port))
 			self.running = True
@@ -137,21 +152,27 @@ class FlowServer (object):
 
 		key = '%s:%d' % (host,port)
 		if key not in self.servers:
-			consumer = _FlowServerConsumer(queue,self.container,raising)
-			consumer.parent = self
-			self.consumer[key] = consumer
+			# start 3 consumers per ipfix server
+			for index in range(3):
+				consumer = _FlowServerConsumer(queue,self.container,raising)
+				consumer.parent = self
+				self.consumer[key+str(index)] = consumer
 
 			server = _FlowServerFactory(host,port,queue,raising)
 			server.parent = self
 			self.servers[key] = server
 
 	def run (self,daemon):
+		for key in self.consumer:
+			if daemon and self.consumer[key].use_thread:
+				self.consumer[key].start()
+			if not daemon and not self.consumer[key].use_thread:
+				self.consumer[key].start()
+
 		for key in self.servers:
 			if daemon and self.servers[key].use_thread:
-				self.consumer[key].start()
 				self.servers[key].start()
 			if not daemon and not self.servers[key].use_thread:
-				self.consumer[key].start()
 				self.servers[key].start()
 
 	def join (self):

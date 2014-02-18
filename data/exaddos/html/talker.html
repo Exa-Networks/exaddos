@@ -75,7 +75,8 @@
 
 		<script type="text/javascript" src="/inc/jquery-1.10.2.js"></script>
 		<script type="text/javascript" src="/inc/jquery.tmpl.min.js"></script>
-		<!-- <script type="text/javascript" src="/inc/jquery.tablesorter.pager.js"></script> -->
+		<script type="text/javascript" src="/inc/jquery.tablesorter.js"></script>
+<!--		<script type="text/javascript" src="/inc/jquery.tablesorter.pager.js"></script> -->
 
 		<script type="text/javascript">
 				function toIP (number) {
@@ -131,12 +132,6 @@
 							$("#root_container").empty();
 							$("#protocol_template").tmpl(protocol_array).appendTo("#root_container");
 
-							// console.log($("table"));
-							// $("table").tablesorter();
-							// $("#protocol_6").__proto__.tablesorter();
-							// $("#protocol_6").trigger("update");
-							// $("#protocol_6").trigger("appendCache");
-
 							for (var protocol in response) {
 								flow_array = new Array();
 								for (var flow in response[protocol]) {
@@ -164,19 +159,32 @@
 								$("#flow_template").tmpl(flow_array).appendTo("#protocol_"+protocol+"_container");
 							}
 
-							// $("#protocol_6").tablesorter();
-							// $("#protocol_6").trigger('update');
-							// $("#protocol_6").tablesorter();
+							// var table = $('#protocol_6').remove().appendTo('#root_container').tablesorter();
+							// $("#protocol_6").trigger("update");
+
+							// $("#protocol_17")
+							// 	.trigger("update")
+							// $("#protocol_17")
+							// 	.update();
+
+							// var sorting = [[2,1],];
+							// $("#protocol_17")
+							// 	.trigger("sorton",[sorting]);
+
+							// $("#protocol_6")
+							// 	.tablesorter();
+
+							// $("#protocol_1")
+							// 	.tablesorter();
 
 
-							// $("#protocol_tcp").tablesorter();
-							// $("#protocol_tcp").trigger('update');
-							// $("#protocol_tcp").tablesorter();
+							// $(".tablesorter")
+							// 	.trigger("update");
+							// 	//	.trigger('appendCache');
 
-
-							// $('table').tablesorter();
-							// $('table').trigger('update');
-							// $('table').tablesorter();
+							// var sorting = [[[1,1]]];
+							// $(".tablesorter")
+							// 	.trigger("sorton",[sorting]);
 
 						},
 						error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -191,7 +199,7 @@
 
 			window.setInterval(function(){
 				fetch_talkers('/post/monitor/ip',ipn);
-			}, 1000);
+			}, 10000);
 
 			window.setInterval(function(){
 				$("#error").empty();

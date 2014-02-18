@@ -6,7 +6,9 @@ Created by Thomas Mangin on 2014-02-09.
 Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 """
 
+import sys
 import struct
+import random
 
 # http://www.iana.org/assignments/ipfix/ipfix.xhtml
 
@@ -88,6 +90,8 @@ NAME = {
 }
 
 class IPFIX (object):
+	decoded = 0L
+
 	care = [
 		TEMPLATE.protocolIdentifier,
 		TEMPLATE.sourceIPv4Address,
@@ -101,6 +105,7 @@ class IPFIX (object):
 	def __init__ (self,callback):
 		self.template = {}
 		self.callback = callback
+		self.id = random.randint(1,999)
 
 # The format of the IPFIX Message Header
 #    0                   1                   2                   3
@@ -256,5 +261,13 @@ class IPFIX (object):
 		for what in format:
 			offset,size = format[what]
 			extracted[NAME[what]], = struct.unpack(CONVERT[(what,size)],data[offset:offset+size])
+
+		# # reports the data decoding rate per thread
+		# self.decoded +=1
+		# if not self.decoded % 1000:
+		# 	print "id %d decoded %ld flows" % (self.id,self.decoded)
+		# 	sys.stdout.flush()
+		# 	if self.decoded == sys.maxint:
+		# 		self.decoded = self.decoded % 1000
 
 		self.callback(extracted)

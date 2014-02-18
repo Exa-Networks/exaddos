@@ -2,3 +2,4 @@ log better the different thread issues so they can be reported in the interface
 return all value as number via JSON and format it in the page
 move the inserting in container in its own thread to not miss on UDP packets
 reduce the time the lock is taken for the flow container
+find the sweet spot for the number of decoding thread per ipfix server thread (the number 3 comes from nowhere)
