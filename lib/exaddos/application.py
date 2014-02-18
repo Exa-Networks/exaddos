@@ -12,6 +12,7 @@ import pwd
 import socket
 import errno
 
+from .log import log,err,silence
 from exaddos import reactor
 
 def __exit(memory,code):
@@ -76,7 +77,7 @@ def drop_privileges (configuration):
 		return True
 
 	if os.getuid() != 0:
-		print >> sys.stderr, "not running as root, not changing UID"
+		err('not running as root, not changing UID')
 		return True
 
 	users = [configuration.daemon.user,'nobody']
@@ -85,6 +86,56 @@ def drop_privileges (configuration):
 		if __drop_privileges(user):
 			return True
 	return False
+
+def daemonise (daemonize):
+	if not daemonize:
+		return
+
+	def fork_exit ():
+		try:
+			pid = os.fork()
+			if pid > 0:
+				os._exit(0)
+		except OSError, e:
+			err('Can not fork, errno %d : %s' % (e.errno,e.strerror))
+
+	def mute ():
+		# closing more would close the log file too if open
+		maxfd = 3
+
+		for fd in range(0, maxfd):
+			try:
+				os.close(fd)
+			except OSError:
+				pass
+		os.open("/dev/null", os.O_RDWR)
+		os.dup2(0, 1)
+		os.dup2(0, 2)
+
+	def is_socket (fd):
+		try:
+			s = socket.fromfd(fd, socket.AF_INET, socket.SOCK_RAW)
+		except ValueError,e:
+			# The file descriptor is closed
+			return False
+		try:
+			s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)
+		except socket.error, e:
+			# It is look like one but it is not a socket ...
+			if e.args[0] == errno.ENOTSOCK:
+				return False
+		return True
+
+	# do not detach if we are already supervised or run by init like process
+	if is_socket(sys.__stdin__.fileno()) or os.getppid() == 1:
+		return
+
+	fork_exit()
+	os.setsid()
+	fork_exit()
+	mute()
+	silence()
+
 
 def help ():
 	sys.stdout.write('usage:\n exaddos [options]\n')
@@ -169,7 +220,7 @@ if __name__ == '__main__':
 	try:
 		configuration = load(arguments['configuration'])
 	except ConfigurationError,e:
-		print >> sys.stderr, 'configuration issue,', str(e)
+		err('configuration issue, %s' % str(e))
 		sys.exit(1)
 
 	for arg in sys.argv[1:]:
@@ -194,6 +245,8 @@ if __name__ == '__main__':
 			# The following may fail on old version of python (but is required for debug.py)
 			os.environ['PDB'] = 'true'
 			configuration.debug.pdb = True
+		if arg in ['-D']:
+			configuration.daemon.daemonize = True
 		if arg in ['-m','--memory']:
 			configuration.debug.memory = True
 
@@ -203,8 +256,10 @@ if __name__ == '__main__':
 	reactor.setup(configuration)
 
 	if not drop_privileges(configuration):
-		print >> sys.stderr, "could not drop privileges"
+		err('could not drop privileges')
 		__exit(configuration.debug.memory,0)
+
+	daemonise(configuration.daemon.daemonize)
 
 	if not configuration.profile.enable:
 		try:
@@ -212,9 +267,9 @@ if __name__ == '__main__':
 		except socket.error,e:
 			# XXXX: Look at ExaBGP code fore better handling
 			if e.errno == errno.EADDRINUSE:
-				print >> sys.stderr, "can not bind to %s:%d (port already/still in use)" % (configuration.http.host, configuration.http.port)
+				err('can not bind to %s:%d (port already/still in use)' % (configuration.http.host, configuration.http.port))
 			if e.errno == errno.EADDRNOTAVAIL:
-				print >> sys.stderr, "can not bind to %s:%d (IP unavailable)" % (configuration.http.host, configuration.http.port)
+				err('can not bind to %s:%d (IP unavailable)' % (configuration.http.host, configuration.http.port))
 		__exit(configuration.debug.memory,0)
 
 	try:
@@ -223,7 +278,7 @@ if __name__ == '__main__':
 		try:
 			import profile
 		except:
-			print >> sys.stderr, 'could not perform profiling'
+			err('could not perform profiling')
 			class profile (object):
 				@staticmethod
 				def run (function):

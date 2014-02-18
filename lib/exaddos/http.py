@@ -14,6 +14,8 @@ import SocketServer
 import json
 import socket
 
+from .log import log,err
+
 # ugly but practical for testing ..
 if __name__ != '__main__':
 	from .thread import Thread
@@ -185,8 +187,7 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 				content = '404'
 
 			if code == 404:
-				print >> sys.stderr, 'http server could not serve json %s' % path
-				sys.stderr.flush()
+				err('http server could not serve json %s' % path)
 
 		elif self.valid_path(path):
 			if path == '/':
@@ -222,8 +223,7 @@ class HTTPHandler (SimpleHTTPServer.SimpleHTTPRequestHandler):
 				content = '404'
 
 			if code == 404:
-				print >> sys.stderr, 'http server could not serve path %s -> %s' % (path, fname)
-				sys.stderr.flush()
+				err('http server could not serve path %s -> %s' % (path, fname))
 
 		else:
 			code = 404
@@ -270,7 +270,7 @@ class _HTTPServerFactory (object):
 	use_thread = True
 
 	def __init__ (self,host,port,raising):
-		print 'http server on %s:%d' % (host,port)
+		log('http server on %s:%d' % (host,port))
 		self.httpd = None
 		self.raising = raising
 
@@ -283,7 +283,7 @@ class _HTTPServerFactory (object):
 		server.serve_forever()
 
 	def start (self):
-		print "starting http server"
+		log('starting http server')
 		if self.use_thread:
 			self.httpd = Thread(self.serve,self.raising)
 			self.httpd.daemon = True

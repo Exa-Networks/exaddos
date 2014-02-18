@@ -168,7 +168,7 @@ defaults = {
 	'daemon' : {
 #		'pidfile'              : (value.unquote,value.quote,     '',               'where to save the pid if we manage it'),
 		'user'                 : (value.user,value.quote,        'nobody',         'user to run as'),
-#		'daemonize'            : (value.boolean,value.lower,     'false',          'should we run in the background'),
+		'daemonize'            : (value.boolean,value.lower,     'false',          'should we run in the background'),
 	},
 
 	'http' : {

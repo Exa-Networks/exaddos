@@ -13,6 +13,7 @@ import time
 from .thread import Thread
 from .ipfix import IPFIX
 from .q import Queue,Empty
+from .log import log,err
 
 class _FlowServerConsumer (object):
 	use_thread = True
@@ -36,8 +37,7 @@ class _FlowServerConsumer (object):
 							if size > 1000:
 								now = time.time()
 								if now - last > 1:
-									print >> sys.stderr, 'warning, ipfix data is generated faster than we can consumme, %d messages queued' % size
-									sys.stderr.flush()
+									err('warning, ipfix data is generated faster than we can consumme, %d messages queued' % size)
 									last = now
 							data = self.queue.get()
 							self.parser.read(data)
@@ -57,7 +57,7 @@ class _FlowServerConsumer (object):
 					pass
 
 	def start (self):
-		print "starting ipfix consummer"
+		log('starting ipfix consummer')
 		if self.use_thread:
 			self.consumerd = Thread(self.serve,self.raising)
 			self.consumerd.daemon = True
@@ -96,7 +96,7 @@ class _FlowServerFactory (object):
 					new += current
 					sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, new)
 				except socket.error:
-					print "ipfix changed SO_RCVBUF from %d to %d" % (current,new-current)
+					log('ipfix changed SO_RCVBUF from %d to %d' % (current,new-current))
 					sys.stdout.flush()
 					break
 
@@ -104,7 +104,7 @@ class _FlowServerFactory (object):
 			sock.bind((self.host,self.port))
 			self.running = True
 		except:
-			print >> sys.stderr, 'could not start ipfix server'
+			err('could not start ipfix server')
 			raise
 
 		if self.use_thread:
@@ -122,7 +122,7 @@ class _FlowServerFactory (object):
 				data = self.queue.put(data)
 
 	def start (self):
-		print "starting ipfix server"
+		log('starting ipfix server')
 		if self.use_thread:
 			self.flowd = Thread(self.serve,self.raising)
 			self.flowd.daemon = True

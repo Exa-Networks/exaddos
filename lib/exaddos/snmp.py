@@ -10,6 +10,7 @@ import sys
 import time
 import random
 
+from .log import log,err
 from .thread import Thread
 from .warning import unicast,notunicast,bw
 
@@ -89,27 +90,24 @@ class _SNMPFactory (object):
 			else:
 				raise NotImplemented('Feel free to add support for this SNMP version and send us the patch - thanks')
 		except PySnmpError:
-			print >> sys.stderr, 'SNMP collection failed for %s %s' % (self.name,key)
-			sys.stderr.flush()
+			err('SNMP collection failed for %s %s' % (self.name,key))
 			return None
 
 		if (errorIndication,errorStatus,errorIndex) == (None,0,0):
 			result = varBinds[0][1]
 
 			if isinstance(result,NoSuchInstance):
-				print >> sys.stderr, 'SNMP: %s did not have %s' % (self.name,key)
+				err('SNMP: %s did not have %s' % (self.name,key))
 				sys.stderr.flush()
 				return None
 
 			try:
 				return varBinds[0][1]
 			except AttributeError:
-				print >> sys.stderr, 'SNMP: %s did not have %s' % (self.name,key)
-				sys.stderr.flush()
+				err('SNMP: %s did not have %s' % (self.name,key))
 				return None
 		else:
-			print >> sys.stderr, 'SNMP collection failed for %s %s' % (self.name,key)
-			sys.stderr.flush()
+			err('SNMP collection failed for %s %s' % (self.name,key))
 			return None
 
 	def collect (self):
@@ -163,8 +161,7 @@ class _SNMPFactory (object):
 		# make sure we are spending the SNMP requests
 		time.sleep(delay)
 
-		print >> sys.stderr, 'snmp poller starting %s' % self.name
-		sys.stderr.flush()
+		err('snmp poller starting %s' % self.name)
 
 		while self.running:
 			start = time.time()
@@ -194,11 +191,10 @@ class _SNMPFactory (object):
 			sleep = max(0,self.interface.snmp_frequency+start-time.time())
 			time.sleep(sleep)
 
-		print >> sys.stderr, 'snmp poller ended %s' % self.name
-		sys.stderr.flush()
+		err('snmp poller ended %s' % self.name)
 
 	def start (self):
-		print "starting snmp clients"
+		log('starting snmp clients')
 		sys.stdout.flush()
 		self.snmp = Thread(self.serve,self.raising)
 		self.snmp.daemon = True

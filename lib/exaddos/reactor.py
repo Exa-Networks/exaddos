@@ -8,6 +8,7 @@ Copyright (c) 2014-2014 Exa Networks. All rights reserved.
 
 import sys
 
+from .log import log,err
 from .q import Queue,Empty
 from .http import HTTPServer
 from .snmp import SNMPClient
@@ -74,7 +75,7 @@ def run ():
 		try:
 			_http.join()
 			if not _http.alive():
-				print >> sys.stderr, "http server stopped / could not start, exiting"
+				err('http server stopped / could not start, exiting')
 				break
 		except KeyboardInterrupt:
 			break
