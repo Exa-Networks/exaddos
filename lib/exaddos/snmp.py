@@ -18,6 +18,7 @@ from .warning import unicast,notunicast,bw
 # http://pysnmp.sourceforge.net/docs/current/apps/sync-command-generator.html
 
 class _SNMPFactory (object):
+	use_thread = True
 	initialised = False
 
 	correction = {
@@ -113,8 +114,6 @@ class _SNMPFactory (object):
 	def collect (self):
 		result = {}
 
-		raise Exception('')
-
 		for key in self.correction:
 			value = self._get(key)
 			if value is not None:
@@ -125,9 +124,8 @@ class _SNMPFactory (object):
 		return result
 
 	def serve (self):
-		if self.running is None:
-			return self._init()
-		return self._serve()
+		self._init()
+		self._serve()
 
 	def _init (self):
 		from pysnmp.smi import builder
@@ -196,9 +194,12 @@ class _SNMPFactory (object):
 	def start (self):
 		log('starting snmp clients')
 		sys.stdout.flush()
-		self.snmp = Thread(self.serve,self.raising)
-		self.snmp.daemon = True
-		self.snmp.start()
+		if self.use_thread:
+			self.snmp = Thread(self.serve,self.raising)
+			self.snmp.daemon = True
+			self.snmp.start()
+		else:
+			self.serve()
 
 	def join (self):
 		if self.snmp:
