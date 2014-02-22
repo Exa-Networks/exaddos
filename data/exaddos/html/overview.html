@@ -158,11 +158,36 @@
 						type: "GET",
 						url: json_address,
 						success: function (response) {
+
+							function format (value,unit) {
+								var size = {
+									0: ' ',
+									1: 'k',
+									2: 'm',
+									3: 'g',
+									4: 't',
+									5: 'p'
+								};
+
+								var scale = 0;
+
+								while (value >= 1000) {
+									scale += 1;
+									value = value / 1000;
+								}
+
+								return value.toFixed(1) + ' &nbsp;' + size[scale] + unit;
+							}
+
 							$("#snmp_container").empty();
 							for (var key in response) {
-								var values = response[key];
-								values['link'] = key;
-								$("#snmp_template").tmpl(values).appendTo("#snmp_container");
+
+								response[key]['link'] = key;
+
+								['ifHCInOctets','ifHCInUcastPkts','ifInNUcastPkts'].map(function (unit) {
+									response[key]['formated_'+unit] = format(response[key][unit],'b');
+								});
+								$("#snmp_template").tmpl(response[key]).appendTo("#snmp_container");
 							}
 						},
 						error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -237,9 +262,9 @@
 			<tr id="${link}">
 				<td class='warning-${warning}'>${link}</td>
 				<td class='warning-${warning}'>${description}</td>
-				<td class='warning-${warning}' align='right'>${ifHCInOctets}</td>
-				<td class='warning-${warning}' align='right'>${ifHCInUcastPkts}</td>
-				<td class='warning-${warning}' align='right'>${ifInNUcastPkts}</td>
+				<td class='warning-${warning}' align='right'>${formated_ifHCInOctets}</td>
+				<td class='warning-${warning}' align='right'>${formated_ifHCInUcastPkts}</td>
+				<td class='warning-${warning}' align='right'>${formated_ifInNUcastPkts}</td>
 				<td class='warning-${warning}' align='right'>${ifInDiscards}</td>
 				<td class='warning-${warning}' align='right'>${ifInErrors}</td>
 				<td class='warning-${warning}' align='right'>${duration}</td>
