@@ -236,7 +236,7 @@ if __name__ == '__main__':
 		from pysnmp.smi import builder
 		builder.MibBuilder().loadModules('SNMPv2-MIB', 'IF-MIB')
 	except:
-		sys.exit('This program requires python netsnmp\n> pip install pysnmp\n>pip install pysnmp_mibs')
+		sys.exit('This program requires python netsnmp\n> pip install pysnmp\n> pip install pysnmp_mibs')
 
 	from exaddos.configuration import ConfigurationError,load,ini,env,default
 
