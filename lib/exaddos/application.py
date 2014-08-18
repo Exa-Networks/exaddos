@@ -238,6 +238,17 @@ if __name__ == '__main__':
 	except:
 		sys.exit('This program requires python netsnmp\n> pip install pysnmp\n> pip install pysnmp_mibs')
 
+	try:
+		from pysnmp.proto.rfc1905 import NoSuchInstance
+	except:
+		# some version of pysnmp do not have this API :-(
+		sys.exit(
+			'This program requires a version of pysnmp which is not compatible with the one installed\n'
+			'You _may_ be able to replace the installed version with the lastest one on pypi\n'
+			'> pip install pysnmp\n'
+			'> pip install pysnmp_mibs'
+		)
+
 	from exaddos.configuration import ConfigurationError,load,ini,env,default
 
 	next = ''
